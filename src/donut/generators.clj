@@ -21,23 +21,18 @@
           ;; example: [:todo_list/id int?]
           ]})
 
-(def collection-parameters
-  {:path [:map
-          ;; example: [:todo_list/id int?]
-          ]})
-
 (def collection-handlers
   {:get
    {:parameters collection-parameters
     :handler
-    (fn [{:keys [db all-params]}]
+    (fn collection-get [{:keys [all-params db]}]
       {:status 200
        :body   [{:entity/id 0}]})}
 
    :post
    {:parameters collection-parameters
     :handler
-    (fn [{:keys [all-params db]}]
+    (fn collection-post [{:keys [all-params db]}]
       ;; insert a record
       {:status 200
        :body   []})}})
@@ -48,21 +43,21 @@
 (def member-handlers
   {:get
    {:parameters member-parameters
-    :handler    (fn [{:keys [all-params db]}]
+    :handler    (fn member-get [{:keys [all-params db]}]
                   {:status 200
                    :body   {:entity/id 0}}
                   )}
 
    :put
    {:parameters member-parameters
-    :handler    (fn []
+    :handler    (fn member-put []
                   ;; TODO update entity
                   {:status 200
                    :body   {:entity/id 0}})
 
     :delete
     {:parameters member-parameters
-     :handler    (fn [{:keys [all-params db]}]
+     :handler    (fn member-delete [{:keys [all-params db]}]
                    ;; TODO delete entity
                    )}
     }})"}}
