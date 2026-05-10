@@ -5,7 +5,7 @@
    [inflections.core :as inflections]
    [rewrite-clj.zip :as rz]))
 
-(defmethod dg/generator-points ::endpoint
+(defmethod dg/generator ::endpoint
   [_ {:keys [top endpoint-name]}]
   (let [endpoint-ns (symbol (str (dg/->ns top)
                                  ".backend.endpoint."
@@ -22,14 +22,14 @@
       {:destination {:path    "{{top|file}}/backend/endpoint_routes.clj"
                      :dir     "src"
                      :rewrite {:path    ['ns :require :clj (dg/pred vector?)]
-                               :actions [dg/append-newline-child rz/append-child]}}
+                               :actions [dg/append-child-newline rz/append-child]}}
        :content     {:form [endpoint-ns :as endpoint-name]}}
 
       ;; add a collection route
       {:destination {:path    "{{top|file}}/cross/endpoint_routes.cljc"
                      :dir     "src"
                      :rewrite {:path    ['routes (dg/pred vector?)]
-                               :actions [dg/append-newline-child rz/append-child]}}
+                               :actions [dg/append-child-newline rz/append-child]}}
        :content     {:template (slurp (io/resource "donut/generators/endpoint/endpoint_collection_route.clj"))}}
 
       ;; add member route
