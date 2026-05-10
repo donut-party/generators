@@ -5,12 +5,12 @@
 ;;---
 ;; malli schemas for request and response validation and coercion
 
-(def collection-parameters-schemas
+(def collection-parameters
   {:path [:map
           ;; example: [:todo_list/id int?]
           ]})
 
-(def member-parameters-schemas
+(def member-parameters
   {:path [:map]})
 
 ;;---
@@ -61,7 +61,7 @@
 
 (def collection-handlers
   {:get
-   {:parameters collection-parameters-schemas
+   {:parameters collection-parameters
     :handler    #'collection-get}
 
    :post
@@ -70,7 +70,7 @@
 
 (def member-handlers
   {:get
-   {:parameters member-parameters-schemas
+   {:parameters member-parameters
     :handler    #'member-get}
 
    :put

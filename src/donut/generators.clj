@@ -19,24 +19,24 @@
        :content     {:template (slurp (io/resource "donut/generators/endpoint/endpoint_ns.clj"))}}
 
       ;; update the routes namespaces
-      {:destination {:path    "{{top|file}}/backend/endpoint_routes.clj"
-                     :dir     "src"
-                     :rewrite {:path    ['ns :require :clj (dg/pred vector?)]
-                               :actions [dg/append-child-newline rz/append-child]}}
+      {:destination {:path "{{top|file}}/backend/endpoint_routes.clj"
+                     :dir  "src"}
+       :modify      {:path    ['ns :require :clj (dg/pred vector?)]
+                     :edits [dg/append-child-newline rz/append-child]}
        :content     {:form [endpoint-ns :as endpoint-name]}}
 
       ;; add a collection route
-      {:destination {:path    "{{top|file}}/cross/endpoint_routes.cljc"
-                     :dir     "src"
-                     :rewrite {:path    ['routes (dg/pred vector?)]
-                               :actions [dg/append-child-newline rz/append-child]}}
+      {:destination {:path "{{top|file}}/cross/endpoint_routes.cljc"
+                     :dir  "src"}
+       :modify      {:path  ['routes (dg/pred vector?)]
+                     :edits [dg/append-child-newline rz/append-child]}
        :content     {:template (slurp (io/resource "donut/generators/endpoint/endpoint_collection_route.clj"))}}
 
       ;; add member route
-      {:destination {:path    "{{top/file}}/cross/endpoint_routes.cljc"
-                     :dir     "src"
-                     :rewrite {:path    ['routes vector?]
-                               :actions [:append-newline :append-child]}}
+      {:destination {:path "{{top|file}}/cross/endpoint_routes.cljc"
+                     :dir  "src"}
+       :modify      {:path  ['routes vector?]
+                     :edits [dg/append-child-newline rz/append-child]}
        :content     {:template (slurp (io/resource "donut/generators/endpoint/endpoint_member_route.clj"))}}]
 
      :data-schema [:map
