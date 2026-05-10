@@ -10,7 +10,8 @@
   (let [endpoint-ns (symbol (str (dg/->ns top)
                                  ".backend.endpoint."
                                  endpoint-name
-                                 "-endpoint"))]
+                                 "-endpoint"))
+        routes-path "{{top|file}}/backend/endpoint_routes.clj"]
     {:points
      [;; generate the endpoint file
       {:destination {:namespace "{{endpoint-ns}}"
@@ -19,24 +20,28 @@
        :content     {:template (slurp (io/resource "donut/generators/endpoint/endpoint_ns.clj"))}}
 
       ;; update the routes namespaces
-      {:destination {:path "{{top|file}}/backend/endpoint_routes.clj"
+      {:destination {:path routes-path
                      :dir  "src"}
-       :modify      {:path    ['ns :require :clj (dg/pred vector?)]
+       :modify      {:path  ['ns :require]
                      :edits [dg/append-child-newline rz/append-child]}
        :content     {:form [endpoint-ns :as endpoint-name]}}
 
       ;; add a collection route
-      {:destination {:path "{{top|file}}/cross/endpoint_routes.cljc"
+      {:destination {:path routes-path
                      :dir  "src"}
        :modify      {:path  ['routes (dg/pred vector?)]
-                     :edits [dg/append-child-newline rz/append-child]}
+                     :edits [dg/append-child-newline
+                             dg/append-child-newline
+                             rz/append-child]}
        :content     {:template (slurp (io/resource "donut/generators/endpoint/endpoint_collection_route.clj"))}}
 
       ;; add member route
-      {:destination {:path "{{top|file}}/cross/endpoint_routes.cljc"
+      {:destination {:path routes-path
                      :dir  "src"}
-       :modify      {:path  ['routes vector?]
-                     :edits [dg/append-child-newline rz/append-child]}
+       :modify      {:path  ['routes (dg/pred vector?)]
+                     :edits [dg/append-child-newline
+                             dg/append-child-newline
+                             rz/append-child]}
        :content     {:template (slurp (io/resource "donut/generators/endpoint/endpoint_member_route.clj"))}}]
 
      :data-schema [:map
