@@ -8,13 +8,13 @@
 ;; TODO more generic collection-route-name and member-route-name
 
 (defn entity-name->data
-  [{:keys [entity-name]}]
+  [{:keys [entity-name route-prefix]}]
   (let [entity-ns (-> entity-name inflections/plural dg/->ns)
         es        (inflections/singular entity-name)
         esk       (keyword es)
         ep        (inflections/plural entity-name)
         epk       (keyword ep)
-        id-key    (str es "/id")]
+        id-key    (keyword (str es) "id")]
     {:entity-name             entity-name
      :entity-ns               entity-ns
      :entity-name-singular    es
@@ -28,7 +28,8 @@
      :member-route-name       esk
      :member-alias            (symbol es)
      :id-key                  id-key
-     :ent-type                esk}))
+     :ent-type                esk
+     :route-prefix            (or route-prefix "/api/v1")}))
 
 (defn endpoint-route-point
   [routes-file-path data]
@@ -42,39 +43,46 @@
    :data        data})
 
 (defmethod dg/generator ::entity-endpoint
-  [_ {:keys [top entity-name] :as input-data}]
-  (let [endpoint-ns      (symbol (str (dg/->ns top) ".backend.endpoint." entity-name "-endpoint"))
+  [_ {:keys [top] :as input-data}]
+  (let [entity-data      (entity-name->data input-data)
+        endpoint-ns      (symbol (str (dg/->ns top)
+                                      ".backend.endpoint."
+                                      (:entity-name-plural entity-data)
+                                      "-endpoint"))
         routes-file-path "{{top|file}}/backend/endpoint_routes.clj"
-        entity-data      (entity-name->data input-data)]
+        endpoint-alias   (:collection-alias entity-data)]
     {:points
      [ ;; generate the endpoint file
       {:destination {:namespace endpoint-ns
                      :extension "clj"
                      :dir       "src"}
-       :content     {:template (slurp (io/resource "donut/generators/endpoint/endpoint_ns.clj"))}}
+       :content     {:template (slurp (io/resource "donut/generators/endpoint/endpoint_ns.clj"))}
+       :data        {:endpoint-ns endpoint-ns}}
 
       ;; update the routes namespace requires
       {:destination {:path routes-file-path
                      :dir  "src"}
        :modify      {:path  ['ns :require]
                      :edits [dg/append-child-newline rz/append-child]}
-       :content     {:form [endpoint-ns :as entity-name]}}
+       :content     {:form [endpoint-ns :as endpoint-alias]}}
 
       ;; add a collection route
       (endpoint-route-point
        routes-file-path
-       {:route-path     (:endpoint-collection-route-path entity-data)
+       {:route-path     (:collection-route-path entity-data)
+        :route-name     (:collection-route-name entity-data)
         :ent-type       (:ent-type entity-data)
         :id-key         (:id-key entity-data)
-        :route-handlers (str (:entity-ns entity-data) "/collection-handlers")})
+        :route-handlers (str endpoint-alias "/collection-handlers")})
 
       ;; add member route
       (endpoint-route-point
        routes-file-path
-       {:route-path     (:endpoint-member-route-path entity-data)
+       {:route-path     (:member-route-path entity-data)
+        :route-name     (:member-route-name entity-data)
         :ent-type       (:ent-type entity-data)
         :id-key         (:id-key entity-data)
-        :route-handlers (str (:entity-ns entity-data) "/member-handlers")})]
+        :route-handlers (str endpoint-alias "/member-handlers")})]
 
      :data-schema [:map
                    [:endpoint-name {:optional? false}]]

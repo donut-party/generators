@@ -1,4 +1,4 @@
-["{{route-path}}"
+["{{route-prefix}}{{route-path}}"
  (merge {:name     {{route-name}}
          :ent-type {{ent-type}}
          :id-key   {{id-key}}}
