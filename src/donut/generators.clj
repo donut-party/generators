@@ -162,3 +162,13 @@
      :data-schema [:map
                    [:top {:optional? false}]
                    [:entity-name {:optional? false}]]}))
+
+(defmethod dg/generator ::entity-scaffold
+  [_ data]
+  (let [endpoint (dg/generator ::entity-endpoint data)
+        ui       (dg/generator ::entity-ui data)]
+    {:points      (into (:points endpoint) (:points ui))
+     :data        (merge (:data endpoint) (:data ui))
+     :data-schema [:map
+                   [:top {:optional? false}]
+                   [:entity-name {:optional? false}]]}))
