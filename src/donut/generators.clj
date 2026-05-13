@@ -15,7 +15,7 @@
         ep        (inflections/plural entity-name)
         epk       (keyword ep)
         id-key    (keyword (str es) "id")]
-    {:entity-name             entity-name
+    {:entity-name             esk
      :entity-ns               entity-ns
      :entity-name-singular    es
      :entity-name-plural      ep
@@ -49,6 +49,7 @@
                                       ".backend.endpoint."
                                       (:entity-name-plural entity-data)
                                       "-endpoint"))
+        test-endpoint-ns (str endpoint-ns "-test")
         routes-file-path "{{top|file}}/backend/endpoint_routes.clj"
         endpoint-alias   (:collection-alias entity-data)]
     {:points
@@ -58,6 +59,13 @@
                      :dir       "src"}
        :content     {:template (slurp (io/resource "donut/generators/endpoint/endpoint_ns.clj"))}
        :data        {:endpoint-ns endpoint-ns}}
+
+      ;; generate endpoint test file
+      {:destination {:namespace test-endpoint-ns
+                     :extension "clj"
+                     :dir       "test"}
+       :content     {:template (slurp (io/resource "donut/generators/endpoint/endpoint_test_ns.clj"))}
+       :data        {:endpoint-ns test-endpoint-ns}}
 
       ;; update the routes namespace requires
       {:destination {:path routes-file-path
