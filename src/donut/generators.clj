@@ -1,6 +1,7 @@
 (ns donut.generators
   (:require
    [clojure.java.io :as io]
+   [clojure.string :as str]
    [donut.generate :as dg]
    [inflections.core :as inflections]
    [rewrite-clj.zip :as rz]))
@@ -24,7 +25,7 @@
      :collection-route-path   (str "/" ep)
      :collection-route-name   epk
      :collection-alias        (symbol ep)
-     :member-route-path       (str "/" (str ep "/{" id-key "}"))
+     :member-route-path       (str "/" ep "/{" id-key "}")
      :member-route-name       esk
      :member-alias            (symbol es)
      :id-key                  id-key
@@ -96,6 +97,59 @@
                    [:endpoint-name {:optional? false}]]
      :data        entity-data}))
 
+;;---
+;; endpoint-tests
+;;---
+
+(defn ->potato-prefix
+  [s]
+  (->> (str/split (name s) #"[^a-zA-Z]")
+       (map first)
+       (apply str)
+       (keyword)))
+
+(defn merge-maps-str [loc m]
+  (-> loc
+      rz/sexpr
+      (merge m)      ; normal Clojure merge
+      str            ; back to string
+      rz/of-string))
+
+(defmethod dg/generator ::entity-endpoint-tests
+  [_ {:keys [top entity-name] :as input-data}]
+  (let [entity-data      (entity-name->data input-data)
+        test-endpoint-ns (symbol (str (dg/->ns top)
+                                      ".backend.endpoint."
+                                      (:entity-name-plural entity-data)
+                                      "-endpoint-test"))
+        fixtures-ns      (symbol (str (dg/->ns top) ".fixtures"))
+        potato-prefix    (->potato-prefix entity-name)]
+    {:points
+     [ ;; generate endpoint test file
+      {:destination {:namespace test-endpoint-ns
+                     :extension "clj"
+                     :dir       "test"}
+       :content     {:template (slurp (io/resource "donut/generators/endpoint/endpoint_test_ns.clj"))}
+       :data        {:endpoint-ns test-endpoint-ns}}
+
+      ;; update fixtures
+      {:destination {:namespace fixtures-ns
+                     :extension "clj"
+                     :dir       "test"}
+       :content     {:template (slurp (io/resource "donut/generators/endpoint/datapotato_fixture.clj"))}
+       :modify      {:path  ['potato-schema (dg/pred map?)]
+                     :edits [merge-maps-str]}}]
+
+     :data-schema [:map
+                   [:endpoint-name {:optional? false}]]
+     :data        (assoc entity-data
+                         :fixtures-ns fixtures-ns
+                         :potato-prefix potato-prefix)}))
+
+;;---
+;; ui
+;;---
+
 (defn entity-component-point
   [ns]
   {:destination {:namespace ns
@@ -103,17 +157,6 @@
                  :dir       "src"}
    :content     {:template (slurp (io/resource "donut/generators/frontend/component_ns.cljs"))}
    :data        {:ns ns}})
-
-(defn entity-route-point
-  [routes-path data]
-  {:destination {:path routes-path
-                 :dir  "src"}
-   :modify      {:path  ['routes (dg/pred vector?)]
-                 :edits [dg/append-child-newline
-                         dg/append-child-newline
-                         rz/append-child]}
-   :content     {:template (slurp (io/resource "donut/generators/frontend/route.cljs"))}
-   :data        data})
 
 (defmethod dg/generator ::entity-ui
   [_ {:keys [top] :as input-data}]
@@ -171,12 +214,21 @@
                    [:top {:optional? false}]
                    [:entity-name {:optional? false}]]}))
 
+;;---
+;; all of them together
+;;---
+
 (defmethod dg/generator ::entity-scaffold
   [_ data]
-  (let [endpoint (dg/generator ::entity-endpoint data)
-        ui       (dg/generator ::entity-ui data)]
-    {:points      (into (:points endpoint) (:points ui))
-     :data        (merge (:data endpoint) (:data ui))
+  (let [endpoint      (dg/generator ::entity-endpoint data)
+        endpoint-test (dg/generator ::entity-endpoint-tests data)
+        ui            (dg/generator ::entity-ui data)]
+    {:points      (vec (concat (:points endpoint)
+                               (:points endpoint-test)
+                               (:points ui)))
+     :data        (merge (:data endpoint)
+                         (:data endpoint-test)
+                         (:data ui))
      :data-schema [:map
                    [:top {:optional? false}]
                    [:entity-name {:optional? false}]]}))
