@@ -1,9 +1,11 @@
 (ns donut.generators
   (:require
+   [clojure.edn :as edn]
    [clojure.java.io :as io]
    [clojure.string :as str]
    [donut.generate :as dg]
    [inflections.core :as inflections]
+   [rewrite-clj.node :as rn]
    [rewrite-clj.zip :as rz]))
 
 ;; TODO more generic collection-route-name and member-route-name
@@ -108,22 +110,32 @@
        (apply str)
        (keyword)))
 
-(defn merge-maps-str [loc m]
-  (-> loc
-      rz/sexpr
-      (merge m)      ; normal Clojure merge
-      str            ; back to string
-      rz/of-string))
+(defn merge-map-str [loc s]
+  (let [m (edn/read-string s)]
+    (reduce (fn [new-loc [k v]]
+              (prn (rz/sexpr new-loc))
+              (if (= {} (rz/sexpr new-loc))
+                (rz/assoc new-loc k v)
+                (-> new-loc
+                    rz/down
+                    rz/rightmost
+                    (rz/insert-right v)
+                    (rz/insert-right k)
+                    (rz/insert-newline-right)
+                    rz/up)))
+            loc
+            m)))
 
 (defmethod dg/generator ::entity-endpoint-tests
   [_ {:keys [top entity-name] :as input-data}]
-  (let [entity-data      (entity-name->data input-data)
-        test-endpoint-ns (symbol (str (dg/->ns top)
-                                      ".backend.endpoint."
-                                      (:entity-name-plural entity-data)
-                                      "-endpoint-test"))
-        fixtures-ns      (symbol (str (dg/->ns top) ".fixtures"))
-        potato-prefix    (->potato-prefix entity-name)]
+  (let [entity-data       (entity-name->data input-data)
+        test-endpoint-ns  (symbol (str (dg/->ns top)
+                                       ".backend.endpoint."
+                                       (:entity-name-plural entity-data)
+                                       "-endpoint-test"))
+        fixtures-ns       (symbol (str (dg/->ns top) ".fixtures"))
+        potato-prefix     (->potato-prefix entity-name)
+        potato-prefix-sym (symbol potato-prefix)]
     {:points
      [ ;; generate endpoint test file
       {:destination {:namespace test-endpoint-ns
@@ -138,13 +150,14 @@
                      :dir       "test"}
        :content     {:template (slurp (io/resource "donut/generators/endpoint/datapotato_fixture.clj"))}
        :modify      {:path  ['potato-schema (dg/pred map?)]
-                     :edits [merge-maps-str]}}]
+                     :edits [merge-map-str]}}]
 
      :data-schema [:map
                    [:endpoint-name {:optional? false}]]
      :data        (assoc entity-data
                          :fixtures-ns fixtures-ns
-                         :potato-prefix potato-prefix)}))
+                         :potato-prefix potato-prefix
+                         :potato-prefix-sym potato-prefix-sym)}))
 
 ;;---
 ;; ui
