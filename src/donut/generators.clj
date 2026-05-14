@@ -1,6 +1,5 @@
 (ns donut.generators
   (:require
-   [clojure.edn :as edn]
    [clojure.java.io :as io]
    [clojure.string :as str]
    [donut.generate :as dg]
@@ -110,21 +109,16 @@
        (apply str)
        (keyword)))
 
-(defn merge-map-str [loc s]
-  (let [m (edn/read-string s)]
-    (reduce (fn [new-loc [k v]]
-              (prn (rz/sexpr new-loc))
-              (if (= {} (rz/sexpr new-loc))
-                (rz/assoc new-loc k v)
-                (-> new-loc
-                    rz/down
-                    rz/rightmost
-                    (rz/insert-right v)
-                    (rz/insert-right k)
-                    (rz/insert-newline-right)
-                    rz/up)))
-            loc
-            m)))
+(defn node-merge
+  "merges in all nodes from a map into loc"
+  [loc map-node]
+  (let [mloc (rz/of-node map-node)]
+    (loop [new-loc       (rz/append-child loc (rn/newlines 1))
+           navigated-map (rz/next mloc)]
+      (if (rz/end? navigated-map)
+        new-loc
+        (recur (rz/append-child new-loc (rz/node navigated-map))
+               (rz/right* navigated-map))))))
 
 (defmethod dg/generator ::entity-endpoint-tests
   [_ {:keys [top entity-name] :as input-data}]
@@ -150,7 +144,7 @@
                      :dir       "test"}
        :content     {:template (slurp (io/resource "donut/generators/endpoint/datapotato_fixture.clj"))}
        :modify      {:path  ['potato-schema (dg/pred map?)]
-                     :edits [merge-map-str]}}]
+                     :edits [node-merge]}}]
 
      :data-schema [:map
                    [:endpoint-name {:optional? false}]]
