@@ -7,8 +7,6 @@
    [rewrite-clj.node :as rn]
    [rewrite-clj.zip :as rz]))
 
-;; TODO more generic collection-route-name and member-route-name
-
 (defn entity-name->data
   [{:keys [entity-name route-prefix]}]
   (let [entity-ns (-> entity-name inflections/plural dg/->ns)
