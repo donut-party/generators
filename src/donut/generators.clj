@@ -33,7 +33,9 @@
 
 (defn endpoint-route-point
   [routes-file-path data]
-  {:destination {:path routes-file-path
+  {:id          ::endpoint-route-point
+   :description "add route to the endpoint routes vector"
+   :destination {:path routes-file-path
                  :dir  "src"}
    :modify      {:path  ['routes (dg/pred vector?)]
                  :edits [dg/append-child-newline
@@ -49,26 +51,20 @@
                                       ".backend.endpoint."
                                       (:entity-name-plural entity-data)
                                       "-endpoint"))
-        test-endpoint-ns (str endpoint-ns "-test")
         routes-file-path "{{top|file}}/backend/endpoint_routes.clj"
         endpoint-alias   (:collection-alias entity-data)]
     {:points
-     [ ;; generate the endpoint file
-      {:destination {:namespace endpoint-ns
+     [{:id          ::create-endpoint-ns
+       :description "create the endpoint namespace"
+       :destination {:namespace endpoint-ns
                      :extension "clj"
                      :dir       "src"}
        :content     {:template (slurp (io/resource "donut/generators/endpoint/endpoint_ns.clj"))}
        :data        {:endpoint-ns endpoint-ns}}
 
-      ;; generate endpoint test file
-      {:destination {:namespace test-endpoint-ns
-                     :extension "clj"
-                     :dir       "test"}
-       :content     {:template (slurp (io/resource "donut/generators/endpoint/endpoint_test_ns.clj"))}
-       :data        {:endpoint-ns test-endpoint-ns}}
-
-      ;; update the routes namespace requires
-      {:destination {:path routes-file-path
+      {:id          ::update-routes-requires
+       :description "update the routes namespace :requires to include endpoint namespace"
+       :destination {:path routes-file-path
                      :dir  "src"}
        :modify      {:path  ['ns :require]
                      :edits [dg/append-child-newline rz/append-child]}
@@ -129,15 +125,18 @@
         potato-prefix     (->potato-prefix entity-name)
         potato-prefix-sym (symbol potato-prefix)]
     {:points
-     [ ;; generate endpoint test file
-      {:destination {:namespace test-endpoint-ns
+     [{:id          ::create-endpoint-test-ns
+       :description "create the endpoint test namespace"
+       :destination {:namespace test-endpoint-ns
                      :extension "clj"
                      :dir       "test"}
        :content     {:template (slurp (io/resource "donut/generators/endpoint/endpoint_test_ns.clj"))}
        :data        {:endpoint-ns test-endpoint-ns}}
 
       ;; update fixtures
-      {:destination {:namespace fixtures-ns
+      {:id          ::update-datapotato-fixture
+       :description "add an entity schema to the datapotato fixture"
+       :destination {:namespace fixtures-ns
                      :extension "clj"
                      :dir       "test"}
        :content     {:template (slurp (io/resource "donut/generators/endpoint/datapotato_fixture.clj"))}
@@ -176,20 +175,26 @@
       (entity-component-point show-ns)
 
       ;; update frontend routes: add requires
-      {:destination {:path routes-file-path
+      {:id          ::update-frontend-routes-requires-collection
+       :description "update the frontend routes namespace :requires to include collection component namespaces"
+       :destination {:path routes-file-path
                      :dir  "src"}
        :modify      {:path  ['ns :require]
                      :edits [dg/append-child-newline rz/append-child]}
        :content     {:form [list-ns :as (:collection-alias entity-data)]}}
 
-      {:destination {:path routes-file-path
+      {:id          ::update-frontend-routes-requires-member
+       :description "update the frontend routes namespace :requires to include member component namespaces"
+       :destination {:path routes-file-path
                      :dir  "src"}
        :modify      {:path  ['ns :require]
                      :edits [dg/append-child-newline rz/append-child]}
        :content     {:form [show-ns :as (:member-alias entity-data)]}}
       
       ;; update frontend routes: add routes
-      {:destination {:path routes-file-path
+      {:id          ::add-frontend-route-collection
+       :description "add collection route to frontend routes"
+       :destination {:path routes-file-path
                      :dir  "src"}
        :modify      {:path  ['routes (dg/pred vector?)]
                      :edits [dg/append-child-newline
@@ -198,7 +203,9 @@
        :content     {:template (slurp (io/resource "donut/generators/frontend/collection_route.cljs"))}
        :data        entity-data}
 
-      {:destination {:path routes-file-path
+      {:id          ::add-frontend-route-member
+       :description "add collection route to frontend routes"
+       :destination {:path routes-file-path
                      :dir  "src"}
        :modify      {:path  ['routes (dg/pred vector?)]
                      :edits [dg/append-child-newline
@@ -208,7 +215,9 @@
        :data        entity-data}
 
       ;; update main nav
-      {:destination {:path (str (dg/->file top) "/frontend/app.cljs")
+      {:id          ::update-main-nav
+       :description "add link to collection page"
+       :destination {:path (str (dg/->file top) "/frontend/app.cljs")
                      :dir  "src"}
        :content     {:template (slurp (io/resource "donut/generators/frontend/main_nav_link.cljs"))}
        :modify      {:path  ['main-nav :ul]
