@@ -156,7 +156,9 @@
 
 (defn entity-component-point
   [ns]
-  {:destination {:namespace ns
+  {:id          ::entity-frontend-component
+   :description "creates file for entity frontend component"
+   :destination {:namespace ns
                  :extension "cljs"
                  :dir       "src"}
    :content     {:template (slurp (io/resource "donut/generators/frontend/component_ns.cljs"))}
