@@ -5,8 +5,7 @@
    [donut.generators :as dgg]))
 
 (deftest entity-endpoint-test
-  (is (= [{:file-path "src/generate_test/backend/endpoint/users_endpoint.clj",          
-           :contents
+  (is (= [{:contents          
            "(ns generate-test.backend.endpoint.users-endpoint)
 
 ;;---
@@ -89,29 +88,30 @@
    :delete
    {:parameters member-parameters
     :handler    #'member-delete}})
-"}
-          {:file-path "src/generate_test/backend/endpoint_routes.clj",
-           :contents
+",
+           :file-path "src/generate_test/backend/endpoint/users_endpoint.clj"}
+          {:contents
            "(ns x (:require 
-[generate-test.backend.endpoint.users-endpoint :as users]))"}
-          {:file-path "src/generate_test/backend/endpoint_routes.clj",
-           :contents
+ [generate-test.backend.endpoint.users-endpoint :as users]))",
+           :file-path "src/generate_test/backend/endpoint_routes.clj"}
+          {:contents
            "(def routes [
-
-[\"/api/v1/users\"
+ 
+ [\"/api/v1/users\"
  (merge {:name     :users
          :ent-type :user
          :id-key   :user/id}
-        users/collection-handlers)]])"}
-          {:file-path "src/generate_test/backend/endpoint_routes.clj",
-           :contents
+        users/collection-handlers)]])",
+           :file-path "src/generate_test/backend/endpoint_routes.clj"}
+          {:contents
            "(def routes [
-
-[\"/api/v1/users/{:user/id}\"
+ 
+ [\"/api/v1/users/{:user/id}\"
  (merge {:name     :user
          :ent-type :user
          :id-key   :user/id}
-        users/member-handlers)]])"}]
+        users/member-handlers)]])",
+           :file-path "src/generate_test/backend/endpoint_routes.clj"}]
          (dg/generate ::dgg/entity-endpoint
                       (merge {:entity-name 'user
                               :top         "generate-test"}
@@ -195,16 +195,16 @@
           {:file-path "src/generate_test/frontend/frontend_routes.cljs",
            :contents
            "(ns x (:require 
-[generate-test.frontend.components.user.list :as users]))"}
+ [generate-test.frontend.components.user.list :as users]))"}
           {:file-path "src/generate_test/frontend/frontend_routes.cljs",
            :contents
            "(ns x (:require 
-[generate-test.frontend.components.user.show :as user]))"}
+ [generate-test.frontend.components.user.show :as user]))"}
           {:file-path "src/generate_test/frontend/frontend_routes.cljs",
            :contents
            "(defroutes routes [
-
-[\"/users\"
+ 
+ [\"/users\"
  {:name       :users
   :components {:main [users/component]}
   ::dfe/on    {:param-change
@@ -212,8 +212,8 @@
           {:file-path "src/generate_test/frontend/frontend_routes.cljs",
            :contents
            "(defroutes routes [
-
-[\"/users/{:user/id}\"
+ 
+ [\"/users/{:user/id}\"
  {:name       :user
   :components {:main [user/component]}
   ::dfe/on    {:param-change
@@ -222,7 +222,7 @@
           {:file-path "src/generate_test/frontend/app.cljs",
            :contents
            "(def main-nav [:ul 
-[:li
+ [:li
  [dnc/simple-route-link
   {:data-tip \"users\"
    :route-name :users}
