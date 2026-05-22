@@ -113,10 +113,11 @@
         users/member-handlers)]])",
            :file-path "src/generate_test/backend/endpoint_routes.clj"}]
          (dg/generate ::dgg/entity-endpoint
-                      (merge {:entity-name 'user
-                              :top         "generate-test"}
-                             (dg/test-read-write {::dgg/update-routes-requires '(ns x (:require))
-                                                  ::dgg/endpoint-route-point   '(def routes [])}))))))
+                      {:entity-name 'user
+                       :top         "generate-test"}
+                      {:read-point  (dg/read-point-test-fn {::dgg/update-routes-requires '(ns x (:require))
+                                                            ::dgg/endpoint-route-point   '(def routes [])})
+                       :write-point dg/write-point-test}))))
 
 (deftest entity-endpoint-tests-test
   (is (= [{:file-path          
@@ -169,9 +170,10 @@
                               :generate {:schema [:map]}
                               :fixtures {:table-name \"user\"}}})"}]
          (dg/generate ::dgg/entity-endpoint-tests
-                      (merge {:entity-name 'user
-                              :top         "generate-test"}
-                             (dg/test-read-write {::dgg/update-datapotato-fixture '(def potato-schema {})}))))))
+                      {:entity-name 'user
+                       :top         "generate-test"}
+                      {:read-point  (dg/read-point-test-fn {::dgg/update-datapotato-fixture '(def potato-schema {})})
+                       :write-point dg/write-point-test}))))
 
 (deftest entity-ui-test
   (is (= [{:file-path "src/generate_test/frontend/components/user/list.cljs",          
@@ -231,10 +233,11 @@
   [:span {:class \"is-drawer-close:hidden\"}
    \"users\"]]]])"}]
          (dg/generate ::dgg/entity-ui
-                      (merge {:entity-name 'user
-                              :top         "generate-test"}
-                             (dg/test-read-write {::dgg/update-frontend-routes-requires-collection '(ns x (:require))
-                                                  ::dgg/update-frontend-routes-requires-member     '(ns x (:require))
-                                                  ::dgg/add-frontend-route-collection              '(defroutes routes [])
-                                                  ::dgg/add-frontend-route-member                  '(defroutes routes [])
-                                                  ::dgg/update-main-nav                            '(def main-nav [:ul])}))))))
+                      {:entity-name 'user
+                       :top         "generate-test"}
+                      {:read-point  (dg/read-point-test-fn {::dgg/update-frontend-routes-requires-collection '(ns x (:require))
+                                                            ::dgg/update-frontend-routes-requires-member     '(ns x (:require))
+                                                            ::dgg/add-frontend-route-collection              '(defroutes routes [])
+                                                            ::dgg/add-frontend-route-member                  '(defroutes routes [])
+                                                            ::dgg/update-main-nav                            '(def main-nav [:ul])})
+                       :write-point dg/write-point-test}))))
