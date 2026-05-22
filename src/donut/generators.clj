@@ -206,7 +206,7 @@
        :data        entity-data}
 
       {:id          ::add-frontend-route-member
-       :description "add collection route to frontend routes"
+       :description "add member route to frontend routes"
        :destination {:path routes-file-path
                      :dir  "src"}
        :modify      {:path  ['routes (dg/pred vector?)]
