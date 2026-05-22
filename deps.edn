@@ -1,6 +1,6 @@
 {:paths ["src" "resources"]
  :deps  {inflections/inflections {:mvn/version "0.15.0"}
-         party.donut/generate    {:mvn/version "1.0.54"}}
+         party.donut/generate    {:mvn/version "1.0.57"}}
  :aliases
  {:dev
   {:extra-deps    {org.clojure/clojure {:mvn/version "1.12.4"}}
