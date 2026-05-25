@@ -8,7 +8,7 @@
    [rewrite-clj.zip :as rz]))
 
 (defn entity-name->data
-  [{:keys [entity-name route-prefix]}]
+  [{:keys [entity-name route-prefix top]}]
   (let [entity-ns (-> entity-name inflections/plural dg/->ns)
         es        (inflections/singular entity-name)
         esk       (keyword es)
@@ -21,6 +21,8 @@
      :entity-name-plural      ep
      :entity-name-singular-kw esk
      :entity-name-plural-kw   epk
+     :endpoint-ns             (symbol (str (dg/->ns top) ".backend.endpoint." ep "-endpoint"))
+     :endpoint-ns-alias       (symbol (str ep "-endpoint"))
      :collection-route-path   (str "/" ep)
      :collection-route-name   epk
      :collection-alias        (symbol ep)
@@ -45,22 +47,17 @@
    :data        data})
 
 (defmethod dg/generator ::entity-endpoint
-  [_ {:keys [top] :as input-data}]
+  [_ input-data]
   (let [entity-data      (entity-name->data input-data)
-        endpoint-ns      (symbol (str (dg/->ns top)
-                                      ".backend.endpoint."
-                                      (:entity-name-plural entity-data)
-                                      "-endpoint"))
-        routes-file-path "{{top|file}}/backend/endpoint_routes.clj"
-        endpoint-alias   (:collection-alias entity-data)]
+        routes-file-path "{{top|file}}/backend/endpoint_routes.clj"]
     {:points
      [{:id          ::create-endpoint-ns
        :description "create the endpoint namespace"
-       :destination {:namespace endpoint-ns
+       :destination {:namespace (:endpoint-ns entity-data)
                      :extension "clj"
                      :dir       "src"}
        :content     {:template (slurp (io/resource "donut/generators/endpoint/endpoint_ns.clj"))}
-       :data        {:endpoint-ns endpoint-ns}}
+       :data        {:endpoint-ns (:endpoint-ns entity-data)}}
 
       {:id          ::update-routes-requires
        :description "update the routes namespace :requires to include endpoint namespace"
@@ -68,7 +65,7 @@
                      :dir  "src"}
        :modify      {:path  ['ns :require]
                      :edits [dg/append-child-newline rz/append-child]}
-       :content     {:form [endpoint-ns :as endpoint-alias]}}
+       :content     {:form [(:endpoint-ns entity-data) :as (:endpoint-ns-alias entity-data)]}}
 
       ;; add a collection route
       (endpoint-route-point
@@ -77,7 +74,7 @@
         :route-name     (:collection-route-name entity-data)
         :ent-type       (:ent-type entity-data)
         :id-key         (:id-key entity-data)
-        :route-handlers (str endpoint-alias "/collection-handlers")})
+        :route-handlers (str (:endpoint-ns-alias entity-data) "/collection-handlers")})
 
       ;; add member route
       (endpoint-route-point
@@ -86,7 +83,7 @@
         :route-name     (:member-route-name entity-data)
         :ent-type       (:ent-type entity-data)
         :id-key         (:id-key entity-data)
-        :route-handlers (str endpoint-alias "/member-handlers")})]
+        :route-handlers (str (:endpoint-ns-alias entity-data) "/member-handlers")})]
 
      :data-schema [:map
                    [:endpoint-name {:optional? false}]]
@@ -117,10 +114,7 @@
 (defmethod dg/generator ::entity-endpoint-tests
   [_ {:keys [top entity-name] :as input-data}]
   (let [entity-data       (entity-name->data input-data)
-        test-endpoint-ns  (symbol (str (dg/->ns top)
-                                       ".backend.endpoint."
-                                       (:entity-name-plural entity-data)
-                                       "-endpoint-test"))
+        test-endpoint-ns  (symbol (str (:endpoint-ns entity-data) "-test"))
         fixtures-ns       (symbol (str (dg/->ns top) ".fixtures"))
         potato-prefix     (->potato-prefix entity-name)
         potato-prefix-sym (symbol potato-prefix)]
@@ -131,7 +125,7 @@
                      :extension "clj"
                      :dir       "test"}
        :content     {:template (slurp (io/resource "donut/generators/endpoint/endpoint_test_ns.clj"))}
-       :data        {:endpoint-ns test-endpoint-ns}}
+       :data        {:test-endpoint-ns test-endpoint-ns}}
 
       ;; update fixtures
       {:id          ::update-datapotato-fixture

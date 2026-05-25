@@ -92,7 +92,7 @@
            :file-path "src/generate_test/backend/endpoint/users_endpoint.clj"}
           {:contents
            "(ns x (:require 
- [generate-test.backend.endpoint.users-endpoint :as users]))",
+ [generate-test.backend.endpoint.users-endpoint :as users-endpoint]))",
            :file-path "src/generate_test/backend/endpoint_routes.clj"}
           {:contents
            "(def routes [
@@ -101,7 +101,7 @@
  (merge {:name     :users
          :ent-type :user
          :id-key   :user/id}
-        users/collection-handlers)]])",
+        users-endpoint/collection-handlers)]])",
            :file-path "src/generate_test/backend/endpoint_routes.clj"}
           {:contents
            "(def routes [
@@ -110,7 +110,7 @@
  (merge {:name     :user
          :ent-type :user
          :id-key   :user/id}
-        users/member-handlers)]])",
+        users-endpoint/member-handlers)]])",
            :file-path "src/generate_test/backend/endpoint_routes.clj"}]
          (dg/generate ::dgg/entity-endpoint
                       {:entity-name 'user

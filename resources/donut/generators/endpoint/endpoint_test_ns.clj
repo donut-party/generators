@@ -1,4 +1,4 @@
-(ns {{endpoint-ns}}
+(ns {{test-endpoint-ns}}
   (:require
    [clojure.test :refer [deftest is use-fixtures]]
    [donut.datapotato.core :as dc]
