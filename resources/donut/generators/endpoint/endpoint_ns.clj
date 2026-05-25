@@ -1,4 +1,6 @@
-(ns {{endpoint-ns}})
+(ns {{endpoint-ns}}
+  (:require
+   [{{query-ns}} :as {{query-ns-alias}}]))
 
 ;;---
 ;; schemas

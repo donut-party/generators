@@ -1,5 +1,6 @@
 (ns donut.generators
   (:require
+   [camel-snake-kebab.core :as csk]
    [clojure.java.io :as io]
    [clojure.string :as str]
    [donut.generate :as dg]
@@ -29,6 +30,10 @@
      :member-route-path       (str "/" ep "/{" id-key "}")
      :member-route-name       esk
      :member-alias            (symbol es)
+     :query-ns                (symbol (str (dg/->ns top) ".backend.query." ep "-query"))
+     :query-ns-alias          (symbol (str ep "-query"))
+     :table-name-s            (csk/->snake_case_string ep)
+     :table-name-k            (csk/->snake_case_keyword ep)
      :id-key                  id-key
      :ent-type                esk
      :route-prefix            (or route-prefix "/api/v1")}))
@@ -86,8 +91,20 @@
         :route-handlers (str (:endpoint-ns-alias entity-data) "/member-handlers")})]
 
      :data-schema [:map
-                   [:endpoint-name {:optional? false}]]
+                   [:entity-name {:optional? false}]]
      :data        entity-data}))
+
+(defmethod dg/generator ::entity-query
+  [_ input-data]
+  (let [entity-data (entity-name->data input-data)]
+    {:points
+     [{:id          ::create-query-ns
+       :description "create the query namespace"
+       :destination {:namespace (:query-ns entity-data)
+                     :extension "clj"
+                     :dir       "src"}
+       :content {:template (slurp (io/resource "donut/generators/endpoint/query_ns.clj"))}}]
+     :data entity-data}))
 
 ;;---
 ;; endpoint-tests
@@ -232,9 +249,11 @@
   [_ data]
   (let [endpoint      (dg/generator ::entity-endpoint data)
         endpoint-test (dg/generator ::entity-endpoint-tests data)
+        query         (dg/generator ::entity-query data)
         ui            (dg/generator ::entity-ui data)]
     {:points      (vec (concat (:points endpoint)
                                (:points endpoint-test)
+                               (:points query)
                                (:points ui)))
      :data        (merge (:data endpoint)
                          (:data endpoint-test)

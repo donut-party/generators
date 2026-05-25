@@ -4,9 +4,15 @@
    [donut.generate :as dg]
    [donut.generators :as dgg]))
 
+(def generator-input
+  {:entity-name 'user
+   :top         "generate-test"})
+
 (deftest entity-endpoint-test
   (is (= [{:contents          
-           "(ns generate-test.backend.endpoint.users-endpoint)
+           "(ns generate-test.backend.endpoint.users-endpoint
+  (:require
+   [generate-test.backend.query.users-query :as users-query]))
 
 ;;---
 ;; schemas
@@ -113,8 +119,7 @@
         users-endpoint/member-handlers)]])",
            :file-path "src/generate_test/backend/endpoint_routes.clj"}]
          (dg/generate ::dgg/entity-endpoint
-                      {:entity-name 'user
-                       :top         "generate-test"}
+                      generator-input
                       {:read-point  (dg/read-point-test-fn {::dgg/update-routes-requires '(ns x (:require))
                                                             ::dgg/endpoint-route-point   '(def routes [])})
                        :write-point dg/write-point-test}))))
@@ -168,10 +173,9 @@
            "(def potato-schema {
 :user  {:prefix   :u
                               :generate {:schema [:map]}
-                              :fixtures {:table-name \"user\"}}})"}]
+                              :fixtures {:table-name \"users\"}}})"}]
          (dg/generate ::dgg/entity-endpoint-tests
-                      {:entity-name 'user
-                       :top         "generate-test"}
+                      generator-input
                       {:read-point  (dg/read-point-test-fn {::dgg/update-datapotato-fixture '(def potato-schema {})})
                        :write-point dg/write-point-test}))))
 
@@ -233,11 +237,46 @@
   [:span {:class \"is-drawer-close:hidden\"}
    \"users\"]]]])"}]
          (dg/generate ::dgg/entity-ui
-                      {:entity-name 'user
-                       :top         "generate-test"}
+                      generator-input
                       {:read-point  (dg/read-point-test-fn {::dgg/update-frontend-routes-requires-collection '(ns x (:require))
                                                             ::dgg/update-frontend-routes-requires-member     '(ns x (:require))
                                                             ::dgg/add-frontend-route-collection              '(defroutes routes [])
                                                             ::dgg/add-frontend-route-member                  '(defroutes routes [])
                                                             ::dgg/update-main-nav                            '(def main-nav [:ul])})
                        :write-point dg/write-point-test}))))
+
+(deftest query-test
+  (is (= [{:contents          
+           "(ns generate-test.backend.query.users-query
+  (:require
+   [honey.sql :as sql]
+   [next.jdbc.sql :as jsql]))
+
+(defn find-all
+  [db]
+  (->> {:select [:*]
+        :from   [:users]}
+       sql/format
+       (jsql/query db)
+       (into [])))
+
+(defn find-by-id
+  [db {:keys [{{query-pk}}]}]
+  (->> {:select [:*]
+        :from   [:users]
+        :where  [:= {{query-pk}} id]}
+       sql/format
+       (jsql/query db)
+       first))
+
+(defn insert!
+  [db record]
+  (let [result (jsql/insert! db :users record)]
+    (jsql/query db [\"SELECT * FROM users WHERE rowid = ?\"
+                    (first (vals result))])))
+",
+           :file-path "src/generate_test/backend/query/users_query.clj"}]
+         (dg/generate ::dgg/entity-query
+                      {:entity-name 'user
+                       :top         "generate-test"}
+                      {:write-point dg/write-point-test}))))
