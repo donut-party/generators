@@ -293,3 +293,17 @@
             {:contents "DROP TABLE IF EXISTS users;
 "}]
            (mapv #(select-keys % [:contents]) generated)))))
+
+(deftest scaffold-test
+  (is (dg/generate ::dgg/entity-scaffold
+                   {:entity-name 'user
+                    :top         "generate-test"}
+                   {:read-point  (dg/read-point-test-fn {::dgg/update-routes-requires                     '(ns x (:require))
+                                                         ::dgg/endpoint-route-point                       '(def routes [])
+                                                         ::dgg/update-frontend-routes-requires-collection '(ns x (:require))
+                                                         ::dgg/update-frontend-routes-requires-member     '(ns x (:require))
+                                                         ::dgg/update-datapotato-fixture                  '(def potato-schema {})
+                                                         ::dgg/add-frontend-route-collection              '(defroutes routes [])
+                                                         ::dgg/add-frontend-route-member                  '(defroutes routes [])
+                                                         ::dgg/update-main-nav                            '(def main-nav [:ul])})
+                    :write-point dg/write-point-test})))
