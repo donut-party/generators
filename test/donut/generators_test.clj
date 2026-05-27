@@ -280,3 +280,16 @@
                       {:entity-name 'user
                        :top         "generate-test"}
                       {:write-point dg/write-point-test}))))
+
+(deftest migrations-test
+  (let [generated (dg/generate ::dgg/entity-migrations
+                               {:entity-name 'user
+                                :top         "generate-test"}
+                               {:write-point dg/write-point-test})]
+    (is (= [{:contents "CREATE TABLE IF NOT EXISTS users (
+  id int
+);
+"}
+            {:contents "DROP TABLE IF EXISTS users;
+"}]
+           (mapv #(select-keys % [:contents]) generated)))))

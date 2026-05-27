@@ -6,7 +6,10 @@
    [donut.generate :as dg]
    [inflections.core :as inflections]
    [rewrite-clj.node :as rn]
-   [rewrite-clj.zip :as rz]))
+   [rewrite-clj.zip :as rz])
+  (:import
+   java.time.LocalDateTime
+   java.time.format.DateTimeFormatter))
 
 (defn entity-name->data
   [{:keys [entity-name route-prefix top]}]
@@ -93,18 +96,6 @@
      :data-schema [:map
                    [:entity-name {:optional? false}]]
      :data        entity-data}))
-
-(defmethod dg/generator ::entity-query
-  [_ input-data]
-  (let [entity-data (entity-name->data input-data)]
-    {:points
-     [{:id          ::create-query-ns
-       :description "create the query namespace"
-       :destination {:namespace (:query-ns entity-data)
-                     :extension "clj"
-                     :dir       "src"}
-       :content {:template (slurp (io/resource "donut/generators/endpoint/query_ns.clj"))}}]
-     :data entity-data}))
 
 ;;---
 ;; endpoint-tests
@@ -242,6 +233,41 @@
                    [:entity-name {:optional? false}]]}))
 
 ;;---
+;; db
+;;---
+
+(defmethod dg/generator ::entity-query
+  [_ input-data]
+  (let [entity-data (entity-name->data input-data)]
+    {:points
+     [{:id          ::create-query-ns
+       :description "create the query namespace"
+       :destination {:namespace (:query-ns entity-data)
+                     :extension "clj"
+                     :dir       "src"}
+       :content {:template (slurp (io/resource "donut/generators/endpoint/query_ns.clj"))}}]
+     :data entity-data}))
+
+(defmethod dg/generator ::entity-migrations
+  [_ input-data]
+  (let [entity-data (entity-name->data input-data)
+        timestamp   (.format (LocalDateTime/now)
+                             (DateTimeFormatter/ofPattern "yyMMddHHmmss"))
+        path-start (str "migrations/" timestamp "-create-" (:table-name-s entity-data))]
+    {:points
+     [{:id          ::create-entity-migration-up
+       :description "create up migration for the entity"
+       :destination {:path (str path-start "up.sql")
+                     :dir  "resources"}
+       :content     {:template (slurp (io/resource "donut/generators/db/entity-migration-up.sql"))}}
+      {:id          ::create-entity-migration-down
+       :description "create down migration for the entity"
+       :destination {:path (str path-start "down.sql")
+                     :dir  "resources"}
+       :content     {:template (slurp (io/resource "donut/generators/db/entity-migration-down.sql"))}}]
+     :data entity-data}))
+
+;;---
 ;; all of them together
 ;;---
 
@@ -250,13 +276,17 @@
   (let [endpoint      (dg/generator ::entity-endpoint data)
         endpoint-test (dg/generator ::entity-endpoint-tests data)
         query         (dg/generator ::entity-query data)
+        migrations    (dg/generator ::entity-migration)
         ui            (dg/generator ::entity-ui data)]
     {:points      (vec (concat (:points endpoint)
                                (:points endpoint-test)
                                (:points query)
+                               (:points migrations)
                                (:points ui)))
      :data        (merge (:data endpoint)
                          (:data endpoint-test)
+                         (:data query)
+                         (:data migrations)
                          (:data ui))
      :data-schema [:map
                    [:top {:optional? false}]
