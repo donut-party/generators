@@ -276,7 +276,7 @@
   (let [endpoint      (dg/generator ::entity-endpoint data)
         endpoint-test (dg/generator ::entity-endpoint-tests data)
         query         (dg/generator ::entity-query data)
-        migrations    (dg/generator ::entity-migration)
+        migrations    (dg/generator ::entity-migration data)
         ui            (dg/generator ::entity-ui data)]
     {:points      (vec (concat (:points endpoint)
                                (:points endpoint-test)
