@@ -13,12 +13,13 @@
 
 (defn entity-name->data
   [{:keys [entity-name route-prefix top]}]
-  (let [entity-ns (-> entity-name inflections/plural dg/->ns)
-        es        (inflections/singular entity-name)
-        esk       (keyword es)
-        ep        (inflections/plural entity-name)
-        epk       (keyword ep)
-        id-key    (keyword (str es) "id")]
+  (let [entity-ns    (-> entity-name inflections/plural dg/->ns)
+        es           (inflections/singular entity-name)
+        esk          (keyword es)
+        ep           (inflections/plural entity-name)
+        epk          (keyword ep)
+        id-key       (keyword (str es) "id")
+        table-name-s (csk/->snake_case_string ep)]
     {:entity-name             esk
      :entity-ns               entity-ns
      :entity-name-singular    es
@@ -35,8 +36,9 @@
      :member-alias            (symbol es)
      :query-ns                (symbol (str (dg/->ns top) ".backend.query." ep "-query"))
      :query-ns-alias          (symbol (str ep "-query"))
-     :table-name-s            (csk/->snake_case_string ep)
-     :table-name-k            (csk/->snake_case_keyword ep)
+     :query-pk                (keyword table-name-s "id")
+     :table-name-s            table-name-s
+     :table-name-k            (keyword table-name-s)
      :id-key                  id-key
      :ent-type                esk
      :route-prefix            (or route-prefix "/api/v1")}))

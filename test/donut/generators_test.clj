@@ -261,10 +261,10 @@
        (into [])))
 
 (defn find-by-id
-  [db {:keys [{{query-pk}}]}]
+  [db {:keys [:users/id]}]
   (->> {:select [:*]
         :from   [:users]
-        :where  [:= {{query-pk}} id]}
+        :where  [:= :users/id id]}
        sql/format
        (jsql/query db)
        first))
