@@ -254,7 +254,7 @@
   [_ input-data]
   (let [entity-data (entity-name->data input-data)
         timestamp   (.format (LocalDateTime/now)
-                             (DateTimeFormatter/ofPattern "yyMMddHHmmss"))
+                             (DateTimeFormatter/ofPattern "yyyyMMddHHmmss"))
         path-start (str "migrations/" timestamp "-create-" (:table-name-s entity-data))]
     {:points
      [{:id          ::create-entity-migration-up
