@@ -259,14 +259,14 @@
     {:points
      [{:id          ::create-entity-migration-up
        :description "create up migration for the entity"
-       :destination {:path (str path-start "-up.sql")
+       :destination {:path (str path-start ".up.sql")
                      :dir  "resources"}
-       :content     {:template (slurp (io/resource "donut/generators/db/entity-migration-up.sql"))}}
+       :content     {:template (slurp (io/resource "donut/generators/db/entity-migration.up.sql"))}}
       {:id          ::create-entity-migration-down
        :description "create down migration for the entity"
-       :destination {:path (str path-start "-down.sql")
+       :destination {:path (str path-start ".down.sql")
                      :dir  "resources"}
-       :content     {:template (slurp (io/resource "donut/generators/db/entity-migration-down.sql"))}}]
+       :content     {:template (slurp (io/resource "donut/generators/db/entity-migration.down.sql"))}}]
      :data entity-data}))
 
 ;;---
