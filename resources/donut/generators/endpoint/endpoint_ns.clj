@@ -21,45 +21,36 @@
 ;; request handlers for specific HTTP methods for a route
 
 (defn collection-get
-  [{:keys [all-params dependencies]}]
-  ;; TODO query for entities
+  [{:keys [dependencies]}]
   {:status 200
-   :body []
-   ;; example of how you might return collection entities
-   #_(query/find-all (:datasource dependencies) all-params)}
-  )
+   :body ({{query-ns-alias}}/find-all (:datasource dependencies))})
 
 (defn collection-post
-  [{:keys [all-params db]}]
-  ;; TODO insert a record
+  [{:keys [all-params dependencies]}]
   {:status 200
-   :body   []})
+   :body   ({{query-ns-alias}}/insert! (:datasource dependencies) all-params)})
 
 (defn member-get
   [{:keys [all-params dependencies]}]
-  ;; TODO query for entity
   {:status 200
-   :body {}
-   ;; example of how you might return collection entities
-   #_(query/find-one (:datasource dependencies) all-params)}
-  )
+   :body ({{query-ns-alias}}/find-by-id (:datasource dependencies) all-params)})
 
 (defn member-put
   [{:keys [all-params dependencies]}]
-  ;; TODO update entity
+  ({{query-ns-alias}}/update-by-id! (:datasource dependencies) all-params)
   {:status 200
-   :body   {}})
+   :body   ({{query-ns-alias}}/find-by-id (:datasource dependencies) all-params)})
 
 (defn member-delete
   [{:keys [all-params dependencies]}]
-  ;; TODO delete entity
+  ({{query-ns-alias}}/delete-by-id! (:datasource dependencies) all-params)
   {:status 200
    :body   [:delete-routed-entity]})
 
 ;;---
 ;; route handlers
 ;;---
-;; reitit/ring handlers tying together method with endpoint handlers
+;; reitit/ring handlers tying together request method with endpoint handlers
 
 (def collection-handlers
   {:get

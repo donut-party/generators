@@ -25,3 +25,14 @@
   (let [result (jsql/insert! db {{table-name-k}} record)]
     (jsql/query db ["SELECT * FROM {{table-name-s}} WHERE rowid = ?"
                     (first (vals result))])))
+
+(defn delete-by-id!
+  [db {:keys [{{query-pk}}]}]
+  (jsql/delete! db {{table-name-k}} ["id = ?" id]))
+
+(defn update-by-id!
+  [db record]
+  (jsql/update! db
+                {{table-name-k}}
+                (dissoc record {{query-pk}})
+                (select-keys record  [{{query-pk}}])))
