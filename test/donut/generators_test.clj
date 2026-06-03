@@ -9,7 +9,7 @@
    :top         "generate-test"})
 
 (deftest entity-endpoint-test
-  (is (= [{:contents          
+  (is (= [{:contents
            "(ns generate-test.backend.endpoint.users-endpoint
   (:require
    [generate-test.backend.query.users-query :as users-query]))
@@ -33,45 +33,36 @@
 ;; request handlers for specific HTTP methods for a route
 
 (defn collection-get
-  [{:keys [all-params dependencies]}]
-  ;; TODO query for entities
+  [{:keys [dependencies]}]
   {:status 200
-   :body []
-   ;; example of how you might return collection entities
-   #_(query/find-all (:datasource dependencies) all-params)}
-  )
+   :body (users-query/find-all (:datasource dependencies))})
 
 (defn collection-post
-  [{:keys [all-params db]}]
-  ;; TODO insert a record
+  [{:keys [all-params dependencies]}]
   {:status 200
-   :body   []})
+   :body   (users-query/insert! (:datasource dependencies) all-params)})
 
 (defn member-get
   [{:keys [all-params dependencies]}]
-  ;; TODO query for entity
   {:status 200
-   :body {}
-   ;; example of how you might return collection entities
-   #_(query/find-one (:datasource dependencies) all-params)}
-  )
+   :body (users-query/find-by-id (:datasource dependencies) all-params)})
 
 (defn member-put
   [{:keys [all-params dependencies]}]
-  ;; TODO update entity
+  (users-query/update-by-id! (:datasource dependencies) all-params)
   {:status 200
-   :body   {}})
+   :body   (users-query/find-by-id (:datasource dependencies) all-params)})
 
 (defn member-delete
   [{:keys [all-params dependencies]}]
-  ;; TODO delete entity
+  (users-query/delete-by-id! (:datasource dependencies) all-params)
   {:status 200
    :body   [:delete-routed-entity]})
 
 ;;---
 ;; route handlers
 ;;---
-;; reitit/ring handlers tying together method with endpoint handlers
+;; reitit/ring handlers tying together request method with endpoint handlers
 
 (def collection-handlers
   {:get
@@ -182,12 +173,21 @@
 (deftest entity-ui-test
   (is (= [{:file-path "src/generate_test/frontend/components/user/list.cljs",          
            :contents
-           "(ns generate-test.frontend.components.user.list)
+           "(ns generate-test.frontend.components.user.list
+  (:require
+   [donut.frontend.form.components :as dfc]
+   [donut.frontend.form.flow :as dff]))
 
 (defn component
   []
-  [:div
-   [:h1 \"component\"]])
+  [:div {:class \"prose\"}
+   [:h1 \"{{entity-name-plural}}\"]
+   (dfc/with-form {::dff/form-key :new-{{entity-name-singular}}}
+     [:div
+      [*input {:type                  :text
+               :class                 [\"input\"]
+               :placeholder           \"name\"
+               :donut.input/attr-path :name}]])])
 "}
           {:file-path "src/generate_test/frontend/components/user/show.cljs",
            :contents
@@ -196,7 +196,7 @@
 (defn component
   []
   [:div
-   [:h1 \"component\"]])
+   [:h1 \"{{entity-name-singular}}\"]])
 "}
           {:file-path "src/generate_test/frontend/frontend_routes.cljs",
            :contents
@@ -246,7 +246,8 @@
                        :write-point dg/write-point-test}))))
 
 (deftest query-test
-  (is (= [{:contents          
+  (is (= [{:file-path "src/generate_test/backend/query/users_query.clj",          
+           :contents
            "(ns generate-test.backend.query.users-query
   (:require
    [honey.sql :as sql]
@@ -274,8 +275,18 @@
   (let [result (jsql/insert! db :users record)]
     (jsql/query db [\"SELECT * FROM users WHERE rowid = ?\"
                     (first (vals result))])))
-",
-           :file-path "src/generate_test/backend/query/users_query.clj"}]
+
+(defn delete-by-id!
+  [db {:keys [:users/id]}]
+  (jsql/delete! db :users [\"id = ?\" id]))
+
+(defn update-by-id!
+  [db record]
+  (jsql/update! db
+                :users
+                (dissoc record :users/id)
+                (select-keys record  [:users/id])))
+"}]
          (dg/generate ::dgg/entity-query
                       {:entity-name 'user
                        :top         "generate-test"}
@@ -286,8 +297,10 @@
                                {:entity-name 'user
                                 :top         "generate-test"}
                                {:write-point dg/write-point-test})]
-    (is (= [{:contents "CREATE TABLE IF NOT EXISTS users (
-  id int
+    (is (= [{:contents          
+             "CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name VARCHAR(255) NOT NULL
 );
 "}
             {:contents "DROP TABLE IF EXISTS users;

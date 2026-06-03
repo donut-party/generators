@@ -177,8 +177,21 @@
         routes-file-path "{{top|file}}/frontend/frontend_routes.cljs"]
     {:points
      [;; add compnent files
-      (entity-component-point list-ns)
-      (entity-component-point show-ns)
+      {:id          ::entity-frontend-component-list
+       :description "creates file for entity frontend component list"
+       :destination {:namespace list-ns
+                     :extension "cljs"
+                     :dir       "src"}
+       :content     {:template (slurp (io/resource "donut/generators/frontend/component_list_ns.cljs"))}
+       :data        {:ns list-ns}}
+
+      {:id          ::entity-frontend-component-show
+       :description "creates file for entity frontend component show"
+       :destination {:namespace show-ns
+                     :extension "cljs"
+                     :dir       "src"}
+       :content     {:template (slurp (io/resource "donut/generators/frontend/component_show_ns.cljs"))}
+       :data        {:ns show-ns}}
 
       ;; update frontend routes: add requires
       {:id          ::update-frontend-routes-requires-collection

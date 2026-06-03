@@ -1,3 +1,4 @@
 CREATE TABLE IF NOT EXISTS {{table-name-s}} (
-  id int
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name VARCHAR(255) NOT NULL
 );

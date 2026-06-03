@@ -3,4 +3,4 @@
 (defn component
   []
   [:div
-   [:h1 "component"]])
+   [:h1 "{{entity-name-singular}}"]])
