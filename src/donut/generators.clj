@@ -18,7 +18,7 @@
         esk          (keyword es)
         ep           (inflections/plural entity-name)
         epk          (keyword ep)
-        id-key       (keyword (str es) "id")
+        id-key       (keyword (str ep) "id")
         table-name-s (csk/->snake_case_string ep)]
     {:entity-name             esk
      :entity-ns               entity-ns
