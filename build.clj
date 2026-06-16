@@ -19,7 +19,7 @@
 
 (defn- pom-template [version]
   [[:description "generators for Donut"]
-   [:url "https://github.com/donut-power/generators"]
+   [:url "https://github.com/donut-party/generators"]
    [:licenses
     [:license
      [:name "MIT"]
@@ -28,9 +28,9 @@
     [:developer
      [:name "Daniel Higginbotham"]]]
    [:scm
-    [:url "https://github.com/donut-power/generators"]
-    [:connection "scm:git:https://github.com/donut-power/generators.git"]
-    [:developerConnection "scm:git:ssh:git@github.com:donut-power/generators.git"]
+    [:url "https://github.com/donut-party/generators"]
+    [:connection "scm:git:https://github.com/donut-party/generators.git"]
+    [:developerConnection "scm:git:ssh:git@github.com:donut-party/generators.git"]
     [:tag (str "v" version)]]])
 
 (defn- jar-opts [opts]
