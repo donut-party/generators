@@ -89,12 +89,12 @@
            :file-path "src/generate_test/backend/endpoint/users_endpoint.clj"}
           {:contents
            "(ns x (:require 
- [generate-test.backend.endpoint.users-endpoint :as users-endpoint]))",
+[generate-test.backend.endpoint.users-endpoint :as users-endpoint]))",
            :file-path "src/generate_test/backend/endpoint_routes.clj"}
           {:contents
            "(def routes [
- 
- [\"/api/v1/users\"
+
+[\"/api/v1/users\"
  (merge {:name     :users
          :ent-type :user
          :id-key   :users/id}
@@ -102,8 +102,8 @@
            :file-path "src/generate_test/backend/endpoint_routes.clj"}
           {:contents
            "(def routes [
- 
- [\"/api/v1/users/{:users/id}\"
+
+[\"/api/v1/users/{:users/id}\"
  (merge {:name     :user
          :ent-type :user
          :id-key   :users/id}
@@ -225,16 +225,16 @@
           {:file-path "src/generate_test/frontend/frontend_routes.cljs",
            :contents
            "(ns x (:require 
- [generate-test.frontend.components.user.list :as users]))"}
+[generate-test.frontend.components.user.list :as users]))"}
           {:file-path "src/generate_test/frontend/frontend_routes.cljs",
            :contents
            "(ns x (:require 
- [generate-test.frontend.components.user.show :as user]))"}
+[generate-test.frontend.components.user.show :as user]))"}
           {:file-path "src/generate_test/frontend/frontend_routes.cljs",
            :contents
            "(defroutes routes [
- 
- [\"/users\"
+
+[\"/users\"
  {:name       :users
   :components {:main [users/component]}
   ::dfe/on    {:param-change
@@ -242,8 +242,8 @@
           {:file-path "src/generate_test/frontend/frontend_routes.cljs",
            :contents
            "(defroutes routes [
- 
- [\"/users/{:users/id}\"
+
+[\"/users/{:users/id}\"
  {:name       :user
   :components {:main [user/component]}
   ::dfe/on    {:param-change
@@ -252,7 +252,7 @@
           {:file-path "src/generate_test/frontend/app.cljs",
            :contents
            "(def main-nav [:ul 
- [:li
+[:li
  [dnc/simple-route-link
   {:data-tip \"users\"
    :route-name :users}

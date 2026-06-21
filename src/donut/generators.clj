@@ -73,7 +73,7 @@
        :description "update the routes namespace :requires to include endpoint namespace"
        :destination {:path routes-file-path
                      :dir  "src"}
-       :modify      {:path  ['ns :require]
+       :modify      {:path  ['ns (dg/find-parent :require)]
                      :edits [dg/append-child-newline rz/append-child]}
        :content     {:form [(:endpoint-ns entity-data) :as (:endpoint-ns-alias entity-data)]}}
 
@@ -198,7 +198,7 @@
        :description "update the frontend routes namespace :requires to include collection component namespaces"
        :destination {:path routes-file-path
                      :dir  "src"}
-       :modify      {:path  ['ns :require]
+       :modify      {:path  ['ns (dg/find-parent :require)]
                      :edits [dg/append-child-newline rz/append-child]}
        :content     {:form [list-ns :as (:collection-alias entity-data)]}}
 
@@ -206,7 +206,7 @@
        :description "update the frontend routes namespace :requires to include member component namespaces"
        :destination {:path routes-file-path
                      :dir  "src"}
-       :modify      {:path  ['ns :require]
+       :modify      {:path  ['ns (dg/find-parent :require)]
                      :edits [dg/append-child-newline rz/append-child]}
        :content     {:form [show-ns :as (:member-alias entity-data)]}}
       
@@ -239,7 +239,7 @@
        :destination {:path (str (dg/->file top) "/frontend/app.cljs")
                      :dir  "src"}
        :content     {:template (slurp (io/resource "donut/generators/frontend/main_nav_link.cljs"))}
-       :modify      {:path  ['main-nav :ul]
+       :modify      {:path  ['main-nav (dg/find-parent :ul)]
                      :edits [dg/append-child-newline rz/append-child]}
        :data        entity-data}]
 
