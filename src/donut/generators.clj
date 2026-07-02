@@ -1,7 +1,6 @@
 (ns donut.generators
   (:require
    [camel-snake-kebab.core :as csk]
-   [clojure.java.io :as io]
    [clojure.string :as str]
    [donut.generate :as dg]
    [inflections.core :as inflections]
@@ -52,7 +51,7 @@
    :modify      {:path  ['routes (dg/pred vector?)]
                  :edits [dg/append-child-newline
                          dg/append-child-newline
-                         [dg/append-string-as-form (dg/interpolated (slurp (io/resource "donut/generators/endpoint/route.clj")))]]}
+                         [dg/append-string-as-form (dg/clj-template-resource "donut/generators/endpoint/route.clj")]]}
    :data        data})
 
 (defmethod dg/generator ::entity-endpoint
@@ -66,7 +65,7 @@
        :destination {:namespace (:endpoint-ns entity-data)
                      :extension "clj"
                      :dir       "src"}
-       :content     {:template (dg/interpolated (slurp (io/resource "donut/generators/endpoint/endpoint_ns.clj")))}
+       :content     {:template (dg/clj-template-resource "donut/generators/endpoint/endpoint_ns.clj")}
        :data        {:endpoint-ns (:endpoint-ns entity-data)}}
 
       {:type        [:clojure :modify]
@@ -125,7 +124,7 @@
        :destination {:namespace test-endpoint-ns
                      :extension "clj"
                      :dir       "test"}
-       :content     {:template (dg/interpolated (slurp (io/resource "donut/generators/endpoint/endpoint_test_ns.clj")))}
+       :content     {:template (dg/clj-template-resource "donut/generators/endpoint/endpoint_test_ns.clj")}
        :data        {:test-endpoint-ns test-endpoint-ns}}
 
       ;; update fixtures
@@ -136,7 +135,7 @@
                      :extension "clj"
                      :dir       "test"}
        :modify      {:path  ['potato-schema (dg/pred map?)]
-                     :edits [[dg/node-merge (dg/interpolated (slurp (io/resource "donut/generators/endpoint/datapotato_fixture.clj")))]]}}]
+                     :edits [[dg/node-merge (dg/clj-template-resource "donut/generators/endpoint/datapotato_fixture.clj")]]}}]
 
      :data-schema [:map
                    [:endpoint-name {:optional? false}]]
@@ -157,7 +156,7 @@
    :destination {:namespace ns
                  :extension "cljs"
                  :dir       "src"}
-   :content     {:template (dg/interpolated (slurp (io/resource "donut/generators/frontend/component_ns.cljs")))}
+   :content     {:template (dg/clj-template-resource "donut/generators/frontend/component_ns.cljs")}
    :data        {:ns ns}})
 
 (defmethod dg/generator ::entity-ui
@@ -175,7 +174,7 @@
        :destination {:namespace list-ns
                      :extension "cljs"
                      :dir       "src"}
-       :content     {:template (dg/interpolated (slurp (io/resource "donut/generators/frontend/component_list_ns.cljs")))}
+       :content     {:template (dg/clj-template-resource "donut/generators/frontend/component_list_ns.cljs")}
        :data        {:ns list-ns}}
 
       {:type        [:clojure :create]
@@ -184,7 +183,7 @@
        :destination {:namespace show-ns
                      :extension "cljs"
                      :dir       "src"}
-       :content     {:template (dg/interpolated (slurp (io/resource "donut/generators/frontend/component_show_ns.cljs")))}
+       :content     {:template (dg/clj-template-resource "donut/generators/frontend/component_show_ns.cljs")}
        :data        {:ns show-ns}}
 
       ;; update frontend routes: add requires
@@ -215,7 +214,7 @@
        :modify      {:path  ['routes (dg/pred vector?)]
                      :edits [dg/append-child-newline
                              dg/append-child-newline
-                             [dg/append-string-as-form (dg/interpolated (slurp (io/resource "donut/generators/frontend/collection_route.cljs")))]]}
+                             [dg/append-string-as-form (dg/clj-template-resource "donut/generators/frontend/collection_route.cljs")]]}
        :data        entity-data}
 
       {:type        [:clojure :modify]
@@ -226,7 +225,7 @@
        :modify      {:path  ['routes (dg/pred vector?)]
                      :edits [dg/append-child-newline
                              dg/append-child-newline
-                             [dg/append-string-as-form (dg/interpolated (slurp (io/resource "donut/generators/frontend/member_route.cljs")))]]}
+                             [dg/append-string-as-form (dg/clj-template-resource "donut/generators/frontend/member_route.cljs")]]}
        :data        entity-data}
 
       ;; update main nav
@@ -237,7 +236,7 @@
                      :dir  "src"}
        :modify      {:path  ['main-nav (dg/find-parent :ul)]
                      :edits [dg/append-child-newline
-                             [dg/append-string-as-form (dg/interpolated (slurp (io/resource "donut/generators/frontend/main_nav_link.cljs")))]]}
+                             [dg/append-string-as-form (dg/clj-template-resource "donut/generators/frontend/main_nav_link.cljs")]]}
        :data        entity-data}]
 
      :data-schema [:map
@@ -258,7 +257,7 @@
        :destination {:namespace (:query-ns entity-data)
                      :extension "clj"
                      :dir       "src"}
-       :content     {:template (dg/interpolated (slurp (io/resource "donut/generators/endpoint/query_ns.clj")))}}]
+       :content     {:template (dg/clj-template-resource "donut/generators/endpoint/query_ns.clj")}}]
      :data entity-data}))
 
 (defmethod dg/generator ::entity-migrations
@@ -273,13 +272,13 @@
        :description "create up migration for the entity"
        :destination {:path (str path-start ".up.sql")
                      :dir  "resources"}
-       :content     {:template (dg/interpolated (slurp (io/resource "donut/generators/db/entity-migration.up.sql")))}}
+       :content     {:template (dg/clj-template-resource "donut/generators/db/entity-migration.up.sql")}}
       {:type        [:clojure :create]
        :id          ::create-entity-migration-down
        :description "create down migration for the entity"
        :destination {:path (str path-start ".down.sql")
                      :dir  "resources"}
-       :content     {:template (dg/interpolated (slurp (io/resource "donut/generators/db/entity-migration.down.sql")))}}]
+       :content     {:template (dg/clj-template-resource "donut/generators/db/entity-migration.down.sql")}}]
      :data entity-data}))
 
 ;;---
