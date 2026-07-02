@@ -88,26 +88,13 @@
 ",
            :file-path "src/generate_test/backend/endpoint/users_endpoint.clj"}
           {:contents
-           "(ns x (:require 
-[generate-test.backend.endpoint.users-endpoint :as users-endpoint]))",
+           "(ns x (:require\n       [generate-test.backend.endpoint.users-endpoint :as users-endpoint]))",
            :file-path "src/generate_test/backend/endpoint_routes.clj"}
           {:contents
-           "(def routes [
-
-[\"/api/v1/users\"
- (merge {:name     :users
-         :ent-type :user
-         :id-key   :users/id}
-        users-endpoint/collection-handlers)]])",
+           "(def routes [\n             \n             [\"/api/v1/users\"\n (merge {:name     :users\n         :ent-type :user\n         :id-key   :users/id}\n        users-endpoint/collection-handlers)]])",
            :file-path "src/generate_test/backend/endpoint_routes.clj"}
           {:contents
-           "(def routes [
-
-[\"/api/v1/users/{:users/id}\"
- (merge {:name     :user
-         :ent-type :user
-         :id-key   :users/id}
-        users-endpoint/member-handlers)]])",
+           "(def routes [\n             \n             [\"/api/v1/users/{:users/id}\"\n (merge {:name     :user\n         :ent-type :user\n         :id-key   :users/id}\n        users-endpoint/member-handlers)]])",
            :file-path "src/generate_test/backend/endpoint_routes.clj"}]
          (dg/generate ::dgg/entity-endpoint
                       generator-input
@@ -116,7 +103,7 @@
                        :write-point dg/write-point-test}))))
 
 (deftest entity-endpoint-tests-test
-  (is (= [{:file-path          
+  (is (= [{:file-path
            "test/generate_test/backend/endpoint/users_endpoint_test.clj",
            :contents
            "(ns generate-test.backend.endpoint.users-endpoint-test
@@ -161,17 +148,14 @@
 "}
           {:file-path "test/generate_test/fixtures.clj",
            :contents
-           "(def potato-schema {
-:user  {:prefix   :u
-                              :generate {:schema [:map]}
-                              :fixtures {:table-name \"users\"}}})"}]
+           "(def potato-schema {:user {:prefix   :u\n                              :generate {:schema [:map]}\n                              :fixtures {:table-name \"users\"}}})"}]
          (dg/generate ::dgg/entity-endpoint-tests
                       generator-input
                       {:read-point  (dg/read-point-test-fn {::dgg/update-datapotato-fixture '(def potato-schema {})})
                        :write-point dg/write-point-test}))))
 
 (deftest entity-ui-test
-  (is (= [{:file-path "src/generate_test/frontend/components/user/list.cljs",          
+  (is (= [{:file-path "src/generate_test/frontend/components/user/list.cljs",
            :contents
            "(ns generate-test.frontend.components.user.list
   (:require
@@ -224,42 +208,19 @@
 "}
           {:file-path "src/generate_test/frontend/frontend_routes.cljs",
            :contents
-           "(ns x (:require 
-[generate-test.frontend.components.user.list :as users]))"}
+           "(ns x (:require\n       [generate-test.frontend.components.user.list :as users]))"}
           {:file-path "src/generate_test/frontend/frontend_routes.cljs",
            :contents
-           "(ns x (:require 
-[generate-test.frontend.components.user.show :as user]))"}
+           "(ns x (:require\n       [generate-test.frontend.components.user.show :as user]))"}
           {:file-path "src/generate_test/frontend/frontend_routes.cljs",
            :contents
-           "(defroutes routes [
-
-[\"/users\"
- {:name       :users
-  :components {:main [users/component]}
-  ::dfe/on    {:param-change
-               [[::dsf/get {::dsf/req {:route-name :users}}]]}}]])"}
+           "(defroutes routes [\n                   \n                   [\"/users\"\n {:name       :users\n  :components {:main [users/component]}\n  ::dfe/on    {:param-change\n               [[::dsf/get {::dsf/req {:route-name :users}}]]}}]])"}
           {:file-path "src/generate_test/frontend/frontend_routes.cljs",
            :contents
-           "(defroutes routes [
-
-[\"/users/{:users/id}\"
- {:name       :user
-  :components {:main [user/component]}
-  ::dfe/on    {:param-change
-               [[::dsf/get {::dsf/req {:route-name :user}
-                            ::dfe/xf  [dsf/use-current-route-params]}]]}}]])"}
+           "(defroutes routes [\n                   \n                   [\"/users/{:users/id}\"\n {:name       :user\n  :components {:main [user/component]}\n  ::dfe/on    {:param-change\n               [[::dsf/get {::dsf/req {:route-name :user}\n                            ::dfe/xf  [dsf/use-current-route-params]}]]}}]])"}
           {:file-path "src/generate_test/frontend/app.cljs",
            :contents
-           "(def main-nav [:ul 
-[:li
- [dnc/simple-route-link
-  {:data-tip \"users\"
-   :route-name :users}
-  [:svg {:xmlns \"http://www.w3.org/2000/svg\", :viewBox \"0 0 24 24\", :stroke-linejoin \"round\", :stroke-linecap \"round\", :stroke-width \"2\", :fill \"none\", :stroke \"currentColor\", :class \"my-1.5 inline-block size-4\"}
-   [:path {:stroke-linecap \"round\", :stroke-linejoin \"round\", :d \"M16.5 8.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v8.25A2.25 2.25 0 0 0 6 16.5h2.25m8.25-8.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-7.5A2.25 2.25 0 0 1 8.25 18v-1.5m8.25-8.25h-6a2.25 2.25 0 0 0-2.25 2.25v6\"}]]
-  [:span {:class \"is-drawer-close:hidden\"}
-   \"users\"]]]])"}]
+           "(def main-nav [:ul\n               [:li\n [dnc/simple-route-link\n  {:data-tip \"users\"\n   :route-name :users}\n  [:svg {:xmlns \"http://www.w3.org/2000/svg\", :viewBox \"0 0 24 24\", :stroke-linejoin \"round\", :stroke-linecap \"round\", :stroke-width \"2\", :fill \"none\", :stroke \"currentColor\", :class \"my-1.5 inline-block size-4\"}\n   [:path {:stroke-linecap \"round\", :stroke-linejoin \"round\", :d \"M16.5 8.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v8.25A2.25 2.25 0 0 0 6 16.5h2.25m8.25-8.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-7.5A2.25 2.25 0 0 1 8.25 18v-1.5m8.25-8.25h-6a2.25 2.25 0 0 0-2.25 2.25v6\"}]]\n  [:span {:class \"is-drawer-close:hidden\"}\n   \"users\"]]]])"}]
          (dg/generate ::dgg/entity-ui
                       generator-input
                       {:read-point  (dg/read-point-test-fn {::dgg/update-frontend-routes-requires-collection '(ns x (:require))
@@ -270,7 +231,7 @@
                        :write-point dg/write-point-test}))))
 
 (deftest query-test
-  (is (= [{:file-path "src/generate_test/backend/query/users_query.clj",          
+  (is (= [{:file-path "src/generate_test/backend/query/users_query.clj",
            :contents
            "(ns generate-test.backend.query.users-query
   (:require
@@ -321,14 +282,13 @@
                                {:entity-name 'user
                                 :top         "generate-test"}
                                {:write-point dg/write-point-test})]
-    (is (= [{:contents          
+    (is (= [{:contents
              "CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name VARCHAR(255) NOT NULL
 );
 "}
-            {:contents "DROP TABLE IF EXISTS users;
-"}]
+            {:contents "DROP TABLE IF EXISTS users;\n"}]
            (mapv #(select-keys % [:contents]) generated)))))
 
 (deftest scaffold-test

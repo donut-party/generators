@@ -5,7 +5,6 @@
    [clojure.string :as str]
    [donut.generate :as dg]
    [inflections.core :as inflections]
-   [rewrite-clj.node :as rn]
    [rewrite-clj.zip :as rz])
   (:import
    java.time.LocalDateTime
@@ -13,7 +12,7 @@
 
 (defn entity-name->data
   [{:keys [entity-name route-prefix top]}]
-  (let [entity-ns    (-> entity-name inflections/plural dg/->ns)
+  (let [entity-ns    (-> entity-name inflections/plural dg/file-path->ns)
         es           (inflections/singular entity-name)
         esk          (keyword es)
         ep           (inflections/plural entity-name)
@@ -26,7 +25,7 @@
      :entity-name-plural      ep
      :entity-name-singular-kw esk
      :entity-name-plural-kw   epk
-     :endpoint-ns             (symbol (str (dg/->ns top) ".backend.endpoint." ep "-endpoint"))
+     :endpoint-ns             (symbol (str (dg/file-path->ns top) ".backend.endpoint." ep "-endpoint"))
      :endpoint-ns-alias       (symbol (str ep "-endpoint"))
      :collection-route-path   (str "/" ep)
      :collection-route-name   epk
@@ -34,7 +33,7 @@
      :member-route-path       (str "/" ep "/{" id-key "}")
      :member-route-name       esk
      :member-alias            (symbol es)
-     :query-ns                (symbol (str (dg/->ns top) ".backend.query." ep "-query"))
+     :query-ns                (symbol (str (dg/file-path->ns top) ".backend.query." ep "-query"))
      :query-ns-alias          (symbol (str ep "-query"))
      :query-pk                (keyword table-name-s "id")
      :table-name-s            table-name-s
@@ -45,37 +44,39 @@
 
 (defn endpoint-route-point
   [routes-file-path data]
-  {:id          ::endpoint-route-point
+  {:type        [:clojure :modify]
+   :id          ::endpoint-route-point
    :description "add route to the endpoint routes vector"
    :destination {:path routes-file-path
                  :dir  "src"}
    :modify      {:path  ['routes (dg/pred vector?)]
                  :edits [dg/append-child-newline
                          dg/append-child-newline
-                         rz/append-child]}
-   :content     {:template (slurp (io/resource "donut/generators/endpoint/route.clj"))}
+                         [dg/append-string-as-form (dg/interpolated (slurp (io/resource "donut/generators/endpoint/route.clj")))]]}
    :data        data})
 
 (defmethod dg/generator ::entity-endpoint
   [_ input-data]
   (let [entity-data      (entity-name->data input-data)
-        routes-file-path "{{top|file}}/backend/endpoint_routes.clj"]
+        routes-file-path (dg/interpolated "{{top|file}}/backend/endpoint_routes.clj")]
     {:points
-     [{:id          ::create-endpoint-ns
+     [{:type        [:clojure :create]
+       :id          ::create-endpoint-ns
        :description "create the endpoint namespace"
        :destination {:namespace (:endpoint-ns entity-data)
                      :extension "clj"
                      :dir       "src"}
-       :content     {:template (slurp (io/resource "donut/generators/endpoint/endpoint_ns.clj"))}
+       :content     {:template (dg/interpolated (slurp (io/resource "donut/generators/endpoint/endpoint_ns.clj")))}
        :data        {:endpoint-ns (:endpoint-ns entity-data)}}
 
-      {:id          ::update-routes-requires
+      {:type        [:clojure :modify]
+       :id          ::update-routes-requires
        :description "update the routes namespace :requires to include endpoint namespace"
        :destination {:path routes-file-path
                      :dir  "src"}
        :modify      {:path  ['ns (dg/find-parent :require)]
-                     :edits [dg/append-child-newline rz/append-child]}
-       :content     {:form [(:endpoint-ns entity-data) :as (:endpoint-ns-alias entity-data)]}}
+                     :edits [dg/append-child-newline
+                             [rz/append-child [(:endpoint-ns entity-data) :as (:endpoint-ns-alias entity-data)]]]}}
 
       ;; add a collection route
       (endpoint-route-point
@@ -110,42 +111,32 @@
        (apply str)
        (keyword)))
 
-(defn node-merge
-  "merges in all nodes from a map into loc"
-  [loc map-node]
-  (let [mloc (rz/of-node map-node)]
-    (loop [new-loc       (rz/append-child loc (rn/newlines 1))
-           navigated-map (rz/next mloc)]
-      (if (rz/end? navigated-map)
-        new-loc
-        (recur (rz/append-child new-loc (rz/node navigated-map))
-               (rz/right* navigated-map))))))
-
 (defmethod dg/generator ::entity-endpoint-tests
   [_ {:keys [top entity-name] :as input-data}]
   (let [entity-data       (entity-name->data input-data)
         test-endpoint-ns  (symbol (str (:endpoint-ns entity-data) "-test"))
-        fixtures-ns       (symbol (str (dg/->ns top) ".fixtures"))
+        fixtures-ns       (symbol (str (dg/file-path->ns top) ".fixtures"))
         potato-prefix     (->potato-prefix entity-name)
         potato-prefix-sym (symbol potato-prefix)]
     {:points
-     [{:id          ::create-endpoint-test-ns
+     [{:type        [:clojure :create]
+       :id          ::create-endpoint-test-ns
        :description "create the endpoint test namespace"
        :destination {:namespace test-endpoint-ns
                      :extension "clj"
                      :dir       "test"}
-       :content     {:template (slurp (io/resource "donut/generators/endpoint/endpoint_test_ns.clj"))}
+       :content     {:template (dg/interpolated (slurp (io/resource "donut/generators/endpoint/endpoint_test_ns.clj")))}
        :data        {:test-endpoint-ns test-endpoint-ns}}
 
       ;; update fixtures
-      {:id          ::update-datapotato-fixture
+      {:type        [:clojure :modify]
+       :id          ::update-datapotato-fixture
        :description "add an entity schema to the datapotato fixture"
        :destination {:namespace fixtures-ns
                      :extension "clj"
                      :dir       "test"}
-       :content     {:template (slurp (io/resource "donut/generators/endpoint/datapotato_fixture.clj"))}
        :modify      {:path  ['potato-schema (dg/pred map?)]
-                     :edits [node-merge]}}]
+                     :edits [[dg/node-merge (dg/interpolated (slurp (io/resource "donut/generators/endpoint/datapotato_fixture.clj")))]]}}]
 
      :data-schema [:map
                    [:endpoint-name {:optional? false}]]
@@ -160,87 +151,93 @@
 
 (defn entity-component-point
   [ns]
-  {:id          ::entity-frontend-component
+  {:type        [:clojure :create]
+   :id          ::entity-frontend-component
    :description "creates file for entity frontend component"
    :destination {:namespace ns
                  :extension "cljs"
                  :dir       "src"}
-   :content     {:template (slurp (io/resource "donut/generators/frontend/component_ns.cljs"))}
+   :content     {:template (dg/interpolated (slurp (io/resource "donut/generators/frontend/component_ns.cljs")))}
    :data        {:ns ns}})
 
 (defmethod dg/generator ::entity-ui
   [_ {:keys [top] :as input-data}]
   (let [entity-data      (entity-name->data input-data)
-        ns-prefix        (str (dg/->ns top) ".frontend.components." (:entity-name-singular entity-data))
+        ns-prefix        (str (dg/file-path->ns top) ".frontend.components." (:entity-name-singular entity-data))
         list-ns          (symbol (str ns-prefix ".list"))
         show-ns          (symbol (str ns-prefix ".show"))
-        routes-file-path "{{top|file}}/frontend/frontend_routes.cljs"]
+        routes-file-path (dg/interpolated "{{top|file}}/frontend/frontend_routes.cljs")]
     {:points
-     [;; add compnent files
-      {:id          ::entity-frontend-component-list
+     [;; add component files
+      {:type        [:clojure :create]
+       :id          ::entity-frontend-component-list
        :description "creates file for entity frontend component list"
        :destination {:namespace list-ns
                      :extension "cljs"
                      :dir       "src"}
-       :content     {:template (slurp (io/resource "donut/generators/frontend/component_list_ns.cljs"))}
+       :content     {:template (dg/interpolated (slurp (io/resource "donut/generators/frontend/component_list_ns.cljs")))}
        :data        {:ns list-ns}}
 
-      {:id          ::entity-frontend-component-show
+      {:type        [:clojure :create]
+       :id          ::entity-frontend-component-show
        :description "creates file for entity frontend component show"
        :destination {:namespace show-ns
                      :extension "cljs"
                      :dir       "src"}
-       :content     {:template (slurp (io/resource "donut/generators/frontend/component_show_ns.cljs"))}
+       :content     {:template (dg/interpolated (slurp (io/resource "donut/generators/frontend/component_show_ns.cljs")))}
        :data        {:ns show-ns}}
 
       ;; update frontend routes: add requires
-      {:id          ::update-frontend-routes-requires-collection
+      {:type        [:clojure :modify]
+       :id          ::update-frontend-routes-requires-collection
        :description "update the frontend routes namespace :requires to include collection component namespaces"
        :destination {:path routes-file-path
                      :dir  "src"}
        :modify      {:path  ['ns (dg/find-parent :require)]
-                     :edits [dg/append-child-newline rz/append-child]}
-       :content     {:form [list-ns :as (:collection-alias entity-data)]}}
+                     :edits [dg/append-child-newline
+                             [rz/append-child [list-ns :as (:collection-alias entity-data)]]]}}
 
-      {:id          ::update-frontend-routes-requires-member
+      {:type        [:clojure :modify]
+       :id          ::update-frontend-routes-requires-member
        :description "update the frontend routes namespace :requires to include member component namespaces"
        :destination {:path routes-file-path
                      :dir  "src"}
        :modify      {:path  ['ns (dg/find-parent :require)]
-                     :edits [dg/append-child-newline rz/append-child]}
-       :content     {:form [show-ns :as (:member-alias entity-data)]}}
-      
+                     :edits [dg/append-child-newline
+                             [rz/append-child [show-ns :as (:member-alias entity-data)]]]}}
+
       ;; update frontend routes: add routes
-      {:id          ::add-frontend-route-collection
+      {:type        [:clojure :modify]
+       :id          ::add-frontend-route-collection
        :description "add collection route to frontend routes"
        :destination {:path routes-file-path
                      :dir  "src"}
        :modify      {:path  ['routes (dg/pred vector?)]
                      :edits [dg/append-child-newline
                              dg/append-child-newline
-                             rz/append-child]}
-       :content     {:template (slurp (io/resource "donut/generators/frontend/collection_route.cljs"))}
+                             [dg/append-string-as-form (dg/interpolated (slurp (io/resource "donut/generators/frontend/collection_route.cljs")))]]}
        :data        entity-data}
 
-      {:id          ::add-frontend-route-member
+      {:type        [:clojure :modify]
+       :id          ::add-frontend-route-member
        :description "add member route to frontend routes"
        :destination {:path routes-file-path
                      :dir  "src"}
        :modify      {:path  ['routes (dg/pred vector?)]
                      :edits [dg/append-child-newline
                              dg/append-child-newline
-                             rz/append-child]}
-       :content     {:template (slurp (io/resource "donut/generators/frontend/member_route.cljs"))}
+                             [dg/append-string-as-form (dg/interpolated (slurp (io/resource "donut/generators/frontend/member_route.cljs")))]]}
        :data        entity-data}
 
       ;; update main nav
-      {:id          ::update-main-nav
+      {:type        [:clojure :modify]
+       :id          ::update-main-nav
        :description "add link to collection page"
-       :destination {:path (str (dg/->file top) "/frontend/app.cljs")
+       :destination {:path (str (dg/ns->file-path top) "/frontend/app.cljs")
                      :dir  "src"}
-       :content     {:template (slurp (io/resource "donut/generators/frontend/main_nav_link.cljs"))}
        :modify      {:path  ['main-nav (dg/find-parent :ul)]
-                     :edits [dg/append-child-newline rz/append-child]}
+                     :edits [dg/append-child-newline
+                             [dg/append-string-as-form (dg/interpolated (slurp (io/resource "donut/generators/frontend/main_nav_link.cljs")))]]}
        :data        entity-data}]
 
      :data-schema [:map
@@ -255,12 +252,13 @@
   [_ input-data]
   (let [entity-data (entity-name->data input-data)]
     {:points
-     [{:id          ::create-query-ns
+     [{:type        [:clojure :create]
+       :id          ::create-query-ns
        :description "create the query namespace"
        :destination {:namespace (:query-ns entity-data)
                      :extension "clj"
                      :dir       "src"}
-       :content {:template (slurp (io/resource "donut/generators/endpoint/query_ns.clj"))}}]
+       :content     {:template (dg/interpolated (slurp (io/resource "donut/generators/endpoint/query_ns.clj")))}}]
      :data entity-data}))
 
 (defmethod dg/generator ::entity-migrations
@@ -270,16 +268,18 @@
                              (DateTimeFormatter/ofPattern "yyyyMMddHHmmss"))
         path-start (str "migrations/" timestamp "-create-" (:table-name-s entity-data))]
     {:points
-     [{:id          ::create-entity-migration-up
+     [{:type        [:clojure :create]
+       :id          ::create-entity-migration-up
        :description "create up migration for the entity"
        :destination {:path (str path-start ".up.sql")
                      :dir  "resources"}
-       :content     {:template (slurp (io/resource "donut/generators/db/entity-migration.up.sql"))}}
-      {:id          ::create-entity-migration-down
+       :content     {:template (dg/interpolated (slurp (io/resource "donut/generators/db/entity-migration.up.sql")))}}
+      {:type        [:clojure :create]
+       :id          ::create-entity-migration-down
        :description "create down migration for the entity"
        :destination {:path (str path-start ".down.sql")
                      :dir  "resources"}
-       :content     {:template (slurp (io/resource "donut/generators/db/entity-migration.down.sql"))}}]
+       :content     {:template (dg/interpolated (slurp (io/resource "donut/generators/db/entity-migration.down.sql")))}}]
      :data entity-data}))
 
 ;;---
