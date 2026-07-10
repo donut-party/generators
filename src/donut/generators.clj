@@ -29,7 +29,10 @@
      :collection-route-path   (str "/" ep)
      :collection-route-name   epk
      :collection-alias        (symbol ep)
-     :member-route-path       (str "/" ep "/{" id-key "}")
+     ;; reitit brace params take a symbol-ish name: {users/id} names the
+     ;; param :users/id, while {:users/id} (with colon) creates a param
+     ;; literally named ":users/id" that match-by-name can never fill
+     :member-route-path       (str "/" ep "/{" ep "/id}")
      :member-route-name       esk
      :member-alias            (symbol es)
      :query-ns                (symbol (str (dg/file-path->ns top) ".backend.query." ep "-query"))

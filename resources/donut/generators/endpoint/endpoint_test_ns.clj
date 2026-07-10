@@ -8,7 +8,6 @@
 
 (use-fixtures :each (ds/system-fixture :test))
 
-;; example tests for a hypothetical example-entity:
 (deftest get-entities-test
   (dc/with-fixtures fixtures/datapotato-db
     (let [{:keys [{{potato-prefix-sym}}0 {{potato-prefix-sym}}1]} (dc/insert-fixtures {{{entity-name-singular-kw}} [[2]]})]
@@ -16,8 +15,9 @@
              (set (deth/response :get {{collection-route-name}})))))))
 
 (deftest create-entity-test
-  (is (= (deth/response :post {{collection-route-name}} {} {:attr-1 nil})
-         [])))
+  (is (= ["new name"]
+         (map :{{table-name-s}}/name
+              (deth/response :post {{collection-route-name}} {} {:{{table-name-s}}/name "new name"})))))
 
 (deftest get-single-entity-test
   (dc/with-fixtures fixtures/datapotato-db
@@ -28,8 +28,8 @@
 (deftest update-entity-test
   (dc/with-fixtures fixtures/datapotato-db
     (let [{:keys [{{potato-prefix-sym}}0]} (dc/insert-fixtures {{{entity-name-singular-kw}} [[1]]})]
-      (is (= {:attr-1 nil}
-             (deth/response :put {{member-route-name}} {{potato-prefix-sym}}0 {:attr-1 nil}))))))
+      (is (= (assoc {{potato-prefix-sym}}0 :{{table-name-s}}/name "updated")
+             (deth/response :put {{member-route-name}} {{potato-prefix-sym}}0 {:{{table-name-s}}/name "updated"}))))))
 
 (deftest delete-entity-test
   (dc/with-fixtures fixtures/datapotato-db

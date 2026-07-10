@@ -91,10 +91,10 @@
            "(ns x (:require\n       [generate-test.backend.endpoint.users-endpoint :as users-endpoint]))",
            :file-path "src/generate_test/backend/endpoint_routes.clj"}
           {:contents
-           "(def routes [\n             \n             [\"/api/v1/users\"\n (merge {:name     :users\n         :ent-type :user\n         :id-key   :users/id}\n        users-endpoint/collection-handlers)]])",
+           "(def routes [\n             \n             [\"/users\"\n (merge {:name     :users\n         :ent-type :user\n         :id-key   :users/id}\n        users-endpoint/collection-handlers)]])",
            :file-path "src/generate_test/backend/endpoint_routes.clj"}
           {:contents
-           "(def routes [\n             \n             [\"/api/v1/users/{:users/id}\"\n (merge {:name     :user\n         :ent-type :user\n         :id-key   :users/id}\n        users-endpoint/member-handlers)]])",
+           "(def routes [\n             \n             [\"/users/{users/id}\"\n (merge {:name     :user\n         :ent-type :user\n         :id-key   :users/id}\n        users-endpoint/member-handlers)]])",
            :file-path "src/generate_test/backend/endpoint_routes.clj"}]
          (dg/generate ::dgg/entity-endpoint
                       generator-input
@@ -116,7 +116,6 @@
 
 (use-fixtures :each (ds/system-fixture :test))
 
-;; example tests for a hypothetical example-entity:
 (deftest get-entities-test
   (dc/with-fixtures fixtures/datapotato-db
     (let [{:keys [u0 u1]} (dc/insert-fixtures {:user [[2]]})]
@@ -124,8 +123,9 @@
              (set (deth/response :get :users)))))))
 
 (deftest create-entity-test
-  (is (= (deth/response :post :users {} {:attr-1 nil})
-         [])))
+  (is (= [\"new name\"]
+         (map :users/name
+              (deth/response :post :users {} {:users/name \"new name\"})))))
 
 (deftest get-single-entity-test
   (dc/with-fixtures fixtures/datapotato-db
@@ -136,8 +136,8 @@
 (deftest update-entity-test
   (dc/with-fixtures fixtures/datapotato-db
     (let [{:keys [u0]} (dc/insert-fixtures {:user [[1]]})]
-      (is (= {:attr-1 nil}
-             (deth/response :put :user u0 {:attr-1 nil}))))))
+      (is (= (assoc u0 :users/name \"updated\")
+             (deth/response :put :user u0 {:users/name \"updated\"}))))))
 
 (deftest delete-entity-test
   (dc/with-fixtures fixtures/datapotato-db
@@ -148,7 +148,7 @@
 "}
           {:file-path "test/generate_test/fixtures.clj",
            :contents
-           "(def potato-schema {:user {:prefix   :u\n                              :generate {:schema [:map]}\n                              :fixtures {:table-name \"users\"}}})"}]
+           "(def potato-schema {:user {:prefix   :u\n                              :generate {:schema [:map [:users/name string?]]}\n                              :fixtures {:table-name \"users\"}}})"}]
          (dg/generate ::dgg/entity-endpoint-tests
                       generator-input
                       {:read-point  (dg/read-point-test-fn {::dgg/update-datapotato-fixture '(def potato-schema {})})
@@ -217,7 +217,7 @@
            "(defroutes routes [\n                   \n                   [\"/users\"\n {:name       :users\n  :components {:main [users/component]}\n  ::dfe/on    {:param-change\n               [[::dsf/get {::dsf/req {:route-name :users}}]]}}]])"}
           {:file-path "src/generate_test/frontend/frontend_routes.cljs",
            :contents
-           "(defroutes routes [\n                   \n                   [\"/users/{:users/id}\"\n {:name       :user\n  :components {:main [user/component]}\n  ::dfe/on    {:param-change\n               [[::dsf/get {::dsf/req {:route-name :user}\n                            ::dfe/xf  [dsf/use-current-route-params]}]]}}]])"}
+           "(defroutes routes [\n                   \n                   [\"/users/{users/id}\"\n {:name       :user\n  :components {:main [user/component]}\n  ::dfe/on    {:param-change\n               [[::dsf/get {::dsf/req {:route-name :user}\n                            ::dfe/xf  [dsf/use-current-route-params]}]]}}]])"}
           {:file-path "src/generate_test/frontend/app.cljs",
            :contents
            "(def main-nav [:ul\n               [:li\n [dnc/simple-route-link\n  {:data-tip \"users\"\n   :route-name :users}\n  [:svg {:xmlns \"http://www.w3.org/2000/svg\", :viewBox \"0 0 24 24\", :stroke-linejoin \"round\", :stroke-linecap \"round\", :stroke-width \"2\", :fill \"none\", :stroke \"currentColor\", :class \"my-1.5 inline-block size-4\"}\n   [:path {:stroke-linecap \"round\", :stroke-linejoin \"round\", :d \"M16.5 8.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v8.25A2.25 2.25 0 0 0 6 16.5h2.25m8.25-8.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-7.5A2.25 2.25 0 0 1 8.25 18v-1.5m8.25-8.25h-6a2.25 2.25 0 0 0-2.25 2.25v6\"}]]\n  [:span {:class \"is-drawer-close:hidden\"}\n   \"users\"]]]])"}]
