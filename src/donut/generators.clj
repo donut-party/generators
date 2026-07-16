@@ -17,6 +17,7 @@
         ep           (inflections/plural entity-name)
         epk          (keyword ep)
         id-key       (keyword (str ep) "id")
+        id-key-s     (str (symbol ep "id"))
         table-name-s (csk/->snake_case_string ep)]
     {:entity-name             esk
      :entity-ns               entity-ns
@@ -32,7 +33,7 @@
      ;; reitit brace params take a symbol-ish name: {users/id} names the
      ;; param :users/id, while {:users/id} (with colon) creates a param
      ;; literally named ":users/id" that match-by-name can never fill
-     :member-route-path       (str "/" ep "/{" ep "/id}")
+     :member-route-path       (str "/" ep "/{" id-key-s "}")
      :member-route-name       esk
      :member-alias            (symbol es)
      :query-ns                (symbol (str (dg/file-path->ns top) ".backend.query." ep "-query"))
