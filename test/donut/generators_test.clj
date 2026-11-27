@@ -25,7 +25,8 @@
           ]})
 
 (def member-parameters
-  {:path [:map]})
+  {:path [:map
+          [:users/id int?]]})
 
 ;;---
 ;; endpoint handlers
@@ -168,34 +169,34 @@
    [re-frame.core :as rf]))
 
 ;; TODO move this to the subs namespace
-(rf/reg-sub {{entity-name-plural-kw}}
+(rf/reg-sub :users
   (fn [db]
-    (dcu/entities db {{entity-name-singular-kw}})))
+    (dcu/entities db :user)))
 
-(defn {{entity-name-plural}}
+(defn users
   []
   [:div
-   (->> @(rf/subscribe [{{entity-name-plural-kw}}])
-        (mapv (fn [x] ^{:key ({{id-key}} x)} [:li ({{entity-name-plural-kw}}/name x)]))
+   (->> @(rf/subscribe [:users])
+        (mapv (fn [x] ^{:key (:users/id x)} [:li (:users/name x)]))
         (into [:ul]))])
 
 (defn component
   []
   [:div {:class \"prose\"}
-   [:h1 \"{{entity-name-plural}}\"]
-   (dfc/with-form {::dff/form-key :new-{{entity-name-singular}}}
+   [:h1 \"users\"]
+   (dfc/with-form {::dff/form-key :new-user}
      [:form {:on-submit
              (dcu/prevent-default
                      (fn [_]
                        (*sync-form {::dsf/req {:method     :post
-                                               :route-name {{collection-route-name}}}
+                                               :route-name :users}
                                     ::dfe/on  {:success (dc/into [[::dff/clear-form]])}})))}
       [:div
        [*input {:type                  :text
                 :class                 [\"input\"]
                 :placeholder           \"name\"
-                :donut.input/attr-path {{entity-name-plural-kw}}/name}]]])
-   [{{entity-name-plural}}]])
+                :donut.input/attr-path :users/name}]]])
+   [users]])
 "}
           {:file-path "src/generate_test/frontend/components/user/show.cljs",
            :contents
@@ -204,7 +205,7 @@
 (defn component
   []
   [:div
-   [:h1 \"{{entity-name-singular}}\"]])
+   [:h1 \"user\"]])
 "}
           {:file-path "src/generate_test/frontend/frontend_routes.cljs",
            :contents
@@ -304,3 +305,31 @@
                                                          ::dgg/add-frontend-route-member                  '(defroutes routes [])
                                                          ::dgg/update-main-nav                            '(def main-nav [:ul])})
                     :write-point dg/write-point-test})))
+
+(deftest multi-word-entity-test
+  ;; next.jdbc qualifies result keys with the table name (build_elements), so
+  ;; the route id-key, member path param, query keys and attribute keys must
+  ;; all use the snake_case table name
+  (let [data (dgg/entity-name->data {:entity-name 'build-element :top "generate-test"})]
+    (is (= {:id-key                :build_elements/id
+            :query-pk              :build_elements/id
+            :member-route-path     "/build-elements/{build_elements/id}"
+            :collection-route-path "/build-elements"
+            :table-name-s          "build_elements"}
+           (select-keys data [:id-key :query-pk :member-route-path :collection-route-path :table-name-s]))))
+  (let [[route] (dg/generate ::dgg/entity-endpoint
+                             {:entity-name 'build-element :top "generate-test"}
+                             {:read-point  (dg/read-point-test-fn {::dgg/update-routes-requires '(ns x (:require))
+                                                                   ::dgg/endpoint-route-point   '(def routes [])})
+                              :write-point dg/write-point-test})]
+    (is (re-find #"\[:build_elements/id int\?\]" (:contents route))))
+  (let [[list-ns] (dg/generate ::dgg/entity-ui
+                               {:entity-name 'build-element :top "generate-test"}
+                               {:read-point  (dg/read-point-test-fn {::dgg/update-frontend-routes-requires-collection '(ns x (:require))
+                                                                     ::dgg/update-frontend-routes-requires-member     '(ns x (:require))
+                                                                     ::dgg/add-frontend-route-collection              '(defroutes routes [])
+                                                                     ::dgg/add-frontend-route-member                  '(defroutes routes [])
+                                                                     ::dgg/update-main-nav                            '(def main-nav [:ul])})
+                                :write-point dg/write-point-test})]
+    (is (re-find #"\(:build_elements/id x\)" (:contents list-ns)))
+    (is (re-find #":donut.input/attr-path :build_elements/name" (:contents list-ns)))))

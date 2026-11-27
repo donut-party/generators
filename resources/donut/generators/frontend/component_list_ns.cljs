@@ -17,7 +17,7 @@
   []
   [:div
    (->> @(rf/subscribe [{{entity-name-plural-kw}}])
-        (mapv (fn [x] ^{:key ({{id-key}} x)} [:li ({{entity-name-plural-kw}}/name x)]))
+        (mapv (fn [x] ^{:key ({{id-key}} x)} [:li (:{{table-name-s}}/name x)]))
         (into [:ul]))])
 
 (defn component
@@ -35,5 +35,5 @@
        [*input {:type                  :text
                 :class                 ["input"]
                 :placeholder           "name"
-                :donut.input/attr-path {{entity-name-plural-kw}}/name}]]])
+                :donut.input/attr-path :{{table-name-s}}/name}]]])
    [{{entity-name-plural}}]])

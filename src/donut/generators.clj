@@ -16,9 +16,11 @@
         esk          (keyword es)
         ep           (inflections/plural entity-name)
         epk          (keyword ep)
-        id-key       (keyword (str ep) "id")
-        id-key-s     (str (symbol ep "id"))
-        table-name-s (csk/->snake_case_string ep)]
+        table-name-s (csk/->snake_case_string ep)
+        ;; next.jdbc qualifies columns with the table name, so the id-key
+        ;; uses the snake_case table name: build-element -> :build_elements/id
+        id-key       (keyword table-name-s "id")
+        id-key-s     (str (symbol table-name-s "id"))]
     {:entity-name             esk
      :entity-ns               entity-ns
      :entity-name-singular    es
@@ -245,7 +247,8 @@
 
      :data-schema [:map
                    [:top {:optional? false}]
-                   [:entity-name {:optional? false}]]}))
+                   [:entity-name {:optional? false}]]
+     :data        entity-data}))
 
 ;;---
 ;; db

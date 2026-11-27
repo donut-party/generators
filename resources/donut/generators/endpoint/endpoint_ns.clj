@@ -13,7 +13,8 @@
           ]})
 
 (def member-parameters
-  {:path [:map]})
+  {:path [:map
+          [{{id-key}} int?]]})
 
 ;;---
 ;; endpoint handlers
