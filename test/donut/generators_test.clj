@@ -333,3 +333,25 @@
                                 :write-point dg/write-point-test})]
     (is (re-find #"\(:build_elements/id x\)" (:contents list-ns)))
     (is (re-find #":donut.input/attr-path :build_elements/name" (:contents list-ns)))))
+
+(deftest irregular-plural-test
+  (is (= {:entity-name-singular 'criterion
+          :entity-name-plural   "criteria"
+          :table-name-s         "criteria"
+          :id-key               :criteria/id}
+         (select-keys (dgg/entity-name->data {:entity-name 'criterion :top "generate-test"})
+                      [:entity-name-singular :entity-name-plural :table-name-s :id-key])))
+  (is (= ['criterion "criteria"]
+         ((juxt :entity-name-singular :entity-name-plural)
+          (dgg/entity-name->data {:entity-name 'criteria :top "generate-test"}))))
+  (is (= "build-criteria"
+         (:entity-name-plural (dgg/entity-name->data {:entity-name 'build-criterion :top "generate-test"}))))
+  (is (= ['phenomenon "phenomena"]
+         ((juxt :entity-name-singular :entity-name-plural)
+          (dgg/entity-name->data {:entity-name 'phenomenon :top "generate-test"}))))
+  (is (= ['analysis "analyses"]
+         ((juxt :entity-name-singular :entity-name-plural)
+          (dgg/entity-name->data {:entity-name 'analysis :top "generate-test"}))))
+  (is (= ['datum "data"]
+         ((juxt :entity-name-singular :entity-name-plural)
+          (dgg/entity-name->data {:entity-name 'data :top "generate-test"})))))

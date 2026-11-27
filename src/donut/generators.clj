@@ -9,6 +9,17 @@
    java.time.LocalDateTime
    java.time.format.DateTimeFormatter))
 
+;; inflections has no rules for these, so `criterion` pluralizes to
+;; `criterions` and `data` to `datas`. Later rules take precedence, and the
+;; patterns are suffixes so compound names (build-criterion) work too.
+(inflections/plural!
+ #"(?i)(criteri|phenomen)on$" "$1a"
+ #"(?i)(criteri|phenomen)a$"  "$1a"
+ #"(?i)(dat)a$"               "$1a")
+(inflections/singular!
+ #"(?i)(criteri|phenomen)a$"  "$1on"
+ #"(?i)(criteri|phenomen)on$" "$1on")
+
 (defn entity-name->data
   [{:keys [entity-name route-prefix top]}]
   (let [entity-ns    (-> entity-name inflections/plural dg/file-path->ns)
